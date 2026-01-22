@@ -47,13 +47,16 @@ Check cross-file contracts, shared invariants, and interactions.
 ## Output Format (mandatory)
 
 ### Critical (must fix)
+- **FileName:**
 - **Line(s):**
 - **Problem:**
-- **Impact: (data loss / security / perf / incident risk / correctness)**
-- **Why it matters and explain your reasoning:**
-- **Minimal fix (inline snippet or diff):**
+- **Impact:** (data loss / security / perf / incident risk / correctness)
+- **Why it matters?:** (Explain your reasoning)
+- **Minimal fix:** (inline snippet or diff)
+- **Review comment:** (Review comment to add in pull request) 
 
 ### Suggestion (should fix)
+- **FileName:**
 - **Line(s):**
 - **Problem:**
 - **Impact: (data loss / security / perf / incident risk / correctness)**
@@ -61,6 +64,7 @@ Check cross-file contracts, shared invariants, and interactions.
 - **Minimal fix:**
 
 ### Minor, Nit
+- **FileName:**
 - Short note only
 - Optional suggestion only
 
