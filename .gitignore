@@ -416,3 +416,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+/CodeSmellApp/.idea/.idea.CodeSmellApp/.idea/copilot.data.migration.ask2agent.xml
+/CodeSmellApp/.idea/.idea.CodeSmellApp/.idea/encodings.xml
+/CodeSmellApp/.idea/.idea.CodeSmellApp/.idea/indexLayout.xml
+/CodeSmellApp/.idea/.idea.CodeSmellApp/.idea/vcs.xml
