@@ -10,7 +10,7 @@ git fetch
 git checkout "origin/$BRANCH_NAME"
 git reset --soft $(git merge-base HEAD origin/main)
 
-OUTPUT_DIR="tests_results/_changes"
+OUTPUT_DIR="_changes"
 
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
@@ -39,5 +39,8 @@ done
 
 git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
 printf "%s" "$GH_TOKEN" | tr -d '\r' | gh auth login --with-token
+
+REVIEW_PROMPT=$(curl -fsSL https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md)
 # gh auth status
-copilot -p "Read @tests_results/_changes, do code review*" --yolo --model gpt-5.2 > output1.md
+copilot -p "${REVIEW_PROMPT} @_changes. save results to review-report.md" --yolo --model gpt-5.2
+rm -rf "$OUTPUT_DIR"
