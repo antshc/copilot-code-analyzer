@@ -25,7 +25,7 @@ Review provided dotnet format result json report and format using Output Format.
 * **Line, Char:** [{{LineNumber}}, {{CharNumber}}]
 * **Message:** {{Message}}
 * **Problem:** {{ProblemDescription}}
-* **Review comment:** {{ReviewComment}}
+* **Review comment:** ```text {{ReviewComment}} ```
 
 {{/each}}
 {{/each}}
