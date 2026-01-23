@@ -5,6 +5,10 @@ readonly OUTPUT_DIR="$REPO_ROOT/_changes"
 readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
 readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md"
 
+log_status() {
+  printf "\033[0;32m%s\033[0m\n" "$1"
+}
+
 # Validates required inputs and environment so later steps fail fast.
 validate_inputs() {
   local ghTokenArg="${1:-}"
@@ -23,6 +27,7 @@ validate_inputs() {
 prepare_branch_state() {
   local baseBranchName="$1"
   local branchName="$2"
+  log_status "Preparing branch state using base '$baseBranchName' against '$branchName'"
   git fetch
   git checkout "origin/$branchName"
   git reset --soft "$(git merge-base HEAD "origin/$baseBranchName")"
@@ -31,6 +36,7 @@ prepare_branch_state() {
 # Removes and recreates a working directory to ensure deterministic outputs.
 recreate_directory() {
   local targetDir="$1"
+  log_status "Resetting directory at $targetDir"
   rm -rf "$targetDir"
   mkdir -p "$targetDir"
 }
@@ -38,6 +44,7 @@ recreate_directory() {
 # Downloads prompt text via curl so Copilot invocations stay up to date.
 download_prompt() {
   local url="$1"
+  log_status "Downloading prompt from $url"
   curl -fsSL "$url"
 }
 
@@ -52,6 +59,7 @@ run_dotnet_format_for_changes() {
     exit 1
   fi
 
+  log_status "Running dotnet format analyzers on: $fileList"
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
   dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
 }
@@ -59,17 +67,20 @@ run_dotnet_format_for_changes() {
 # Authenticates the GitHub CLI using the provided personal access token.
 authenticate_github() {
   local ghToken="$1"
+  log_status "Authenticating GitHub CLI session"
   printf "%s" "$ghToken" | tr -d '\r' | gh auth login --with-token
 }
 
 # Invokes Copilot CLI to summarize formatting diagnostics using the generated JSON report.
 run_format_prompt() {
   local formatPrompt="$1"
+  log_status "Running Copilot format prompt to summarize analyzer findings"
   copilot -p "$formatPrompt @$REPORT_OUT/format-report.json. Save output to the file $REPORT_OUT/format-report.md" --yolo --model gpt-5.1-codex-mini
 }
 
 # Captures original file content plus diffs for each changed C# file under the _changes folder.
 collect_file_diffs() {
+  log_status "Collecting file diffs for changed C# files"
   mapfile -t files < <(git diff --name-only HEAD -- '*.cs')
 
   for file in "${files[@]}"; do
@@ -91,27 +102,33 @@ collect_file_diffs() {
       echo "----- DIFF -----"
       git diff HEAD -- "$file"
     } > "$target_path"
+
+    log_status "Captured diff snapshot for $file"
   done
 }
 
 # Restores the contributor branch locally so Copilot reviews the current remote state.
 restore_branch_state() {
   local branchName="$1"
+  log_status "Restoring branch state for $branchName"
   git checkout -B "$branchName" "origin/$branchName"
 }
 
 # Invokes Copilot CLI to perform the review prompt against the assembled change snapshots.
 run_review_prompt() {
   local reviewPrompt="$1"
+  log_status "Running Copilot review prompt on collected diffs"
   copilot -p "${reviewPrompt} @$OUTPUT_DIR. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2
 }
 
 # Deletes the _changes folder so subsequent runs start clean.
 cleanup_change_artifacts() {
+  log_status "Cleaning up change artifacts"
   rm -rf "$OUTPUT_DIR"
 }
 
 main() {
+  log_status "Starting automated review workflow"
   local -a parsedArgs
   mapfile -t parsedArgs < <(validate_inputs "$@")
   local ghToken="${parsedArgs[0]}"
@@ -137,6 +154,7 @@ main() {
   run_review_prompt "$reviewPrompt"
   cleanup_change_artifacts
   restore_branch_state "$branchName"
+  log_status "Review workflow completed"
 }
 
 main "$@"
