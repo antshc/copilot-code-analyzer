@@ -8,22 +8,24 @@ readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-cod
 # Validates required inputs and environment so later steps fail fast.
 validate_inputs() {
   local ghTokenArg="${1:-}"
-  local branchName="${2:-}"
-  local solutionPath="${3:-}"
-  if [[ -z "$ghTokenArg" || -z "$branchName" || -z "$solutionPath" ]]; then
-    echo "Usage: $0 GH_TOKEN BRANCH_NAME SOLUTION_PATH" >&2
+  local baseBranchName="${2:-}"
+  local branchName="${3:-}"
+  local solutionPath="${4:-}"
+  if [[ -z "$ghTokenArg" || -z "$baseBranchName" || -z "$branchName" || -z "$solutionPath" ]]; then
+    echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH" >&2
     exit 1
   fi
 
-  printf "%s\n%s\n%s" "$ghTokenArg" "$branchName" "$solutionPath"
+  printf "%s\n%s\n%s\n%s" "$ghTokenArg" "$baseBranchName" "$branchName" "$solutionPath"
 }
 
 # Synchronizes to the remote branch and rewinds to the merge-base for a clean diff.
 prepare_branch_state() {
-  local branchName="$1"
+  local baseBranchName="$1"
+  local branchName="$2"
   git fetch
   git checkout "origin/$branchName"
-  git reset --soft "$(git merge-base HEAD origin/main)"
+  git reset --soft "$(git merge-base HEAD "origin/$baseBranchName")"
 }
 
 # Removes and recreates a working directory to ensure deterministic outputs.
@@ -113,13 +115,14 @@ main() {
   local -a parsedArgs
   mapfile -t parsedArgs < <(validate_inputs "$@")
   local ghToken="${parsedArgs[0]}"
-  local branchName="${parsedArgs[1]}"
-  local solutionPath="${parsedArgs[2]}"
+  local baseBranchName="${parsedArgs[1]}"
+  local branchName="${parsedArgs[2]}"
+  local solutionPath="${parsedArgs[3]}"
 
   local formatPrompt
   local reviewPrompt
 
-  prepare_branch_state "$branchName"
+  prepare_branch_state "$baseBranchName" "$branchName"
   recreate_directory "$REPORT_OUT"
   formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
   reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
