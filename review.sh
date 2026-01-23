@@ -101,7 +101,7 @@ restore_branch_state() {
 # Invokes Copilot CLI to perform the review prompt against the assembled change snapshots.
 run_review_prompt() {
   local reviewPrompt="$1"
-  copilot -p "${reviewPrompt} @$OUTPUT_DIR. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2-codex
+  copilot -p "${reviewPrompt} @$OUTPUT_DIR. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2
 }
 
 # Deletes the _changes folder so subsequent runs start clean.
