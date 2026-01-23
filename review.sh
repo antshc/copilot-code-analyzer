@@ -53,11 +53,17 @@ run_dotnet_format_for_changes() {
   local solutionPath="$1"
   local fileList
   fileList=$(git diff --name-only HEAD -- '*.cs' | paste -sd' ' -)
-  echo "$fileList"
 
   if [[ -z "$fileList" ]]; then
+    log_status "No changed C# files detected; skipping analyzer run"
     exit 1
   fi
+
+  log_status "Detected changed files:"
+  IFS=' ' read -r -a files <<< "$fileList"
+  for file in "${files[@]}"; do
+    log_status "$file"
+  done
 
   log_status "Running dotnet format analyzers on: $fileList"
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
