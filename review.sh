@@ -1,57 +1,138 @@
 ﻿#!/usr/bin/env bash
+set -euo pipefail
 
-BRANCH_NAME="${1}"
-if [[ -z "$BRANCH_NAME" ]]; then
-  echo "Usage: $0 BRANCH_NAME"
-  exit 1
-fi
+readonly REPORT_OUT="./report"
+readonly OUTPUT_DIR="_changes"
+readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
+readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md"
 
-git fetch
-git checkout "origin/$BRANCH_NAME"
-git reset --soft $(git merge-base HEAD origin/main)
+# Validates required inputs and environment so later steps fail fast.
+validate_inputs() {
+  if [[ ${1:-} == "" ]]; then
+    echo "Usage: $0 BRANCH_NAME" >&2
+    exit 1
+  fi
 
-REPORT_OUT="./report"
-rm -rf "$REPORT_OUT"
-mkdir -p "$REPORT_OUT"
-FORMAT_PROMPT=$(curl -fsSL https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md)
-FILES=$(git diff --name-only HEAD -- '*.cs' | paste -sd' ' -)
-echo $FILES
-dotnet format analyzers "./CodeSmellApp/CodeSmellApp.sln" --no-restore --verify-no-changes --include $FILES --report "$REPORT_OUT"
-# echo $FORMAT_PROMPT
-printf "%s" "$GH_TOKEN" | tr -d '\r' | gh auth login --with-token
-copilot -p "$FORMAT_PROMPT @$REPORT_OUT/format-report.json. Save output to the file $REPORT_OUT/format-report.md" --yolo --model gpt-5.2
+  if [[ -z ${GH_TOKEN:-} ]]; then
+    echo "GH_TOKEN environment variable must be set for gh auth login." >&2
+    exit 1
+  fi
 
-OUTPUT_DIR="_changes"
+  printf "%s" "$1"
+}
 
-rm -rf "$OUTPUT_DIR"
-mkdir -p "$OUTPUT_DIR"
+# Synchronizes to the remote branch and rewinds to the merge-base for a clean diff.
+prepare_branch_state() {
+  local branchName="$1"
+  git fetch
+  git checkout "origin/$branchName"
+  git reset --soft "$(git merge-base HEAD origin/main)"
+}
 
-mapfile -t files < <(git diff --name-only HEAD -- '*.cs')
+# Removes and recreates a working directory to ensure deterministic outputs.
+recreate_directory() {
+  local targetDir="$1"
+  rm -rf "$targetDir"
+  mkdir -p "$targetDir"
+}
 
-for file in "${files[@]}"; do
-  target_path="$OUTPUT_DIR/$file"
-  target_dir="$(dirname "$target_path")"
-  mkdir -p "$target_dir"
+# Downloads prompt text via curl so Copilot invocations stay up to date.
+download_prompt() {
+  local url="$1"
+  curl -fsSL "$url"
+}
 
-  {
-    echo "FILE: $file"
-    echo
-    echo "----- ORIGINAL (HEAD) -----"
-    if git cat-file -e "HEAD:$file" 2>/dev/null; then
-      git show "HEAD:$file"
-    else
-      echo "[File not present in HEAD]"
-    fi
-    echo
-    echo "----- DIFF -----"
-    git diff HEAD -- "$file"
-  } > "$target_path"
-done
+# Runs dotnet-format analyzers limited to changed C# files to generate the report artifact.
+run_dotnet_format_for_changes() {
+  local fileList
+  fileList=$(git diff --name-only HEAD -- '*.cs' | paste -sd' ' -)
+  echo "$fileList"
 
-git checkout -B $BRANCH_NAME origin/$BRANCH_NAME
+  if [[ -z "$fileList" ]]; then
+    dotnet format analyzers "./CodeSmellApp/CodeSmellApp.sln" --no-restore --verify-no-changes --report "$REPORT_OUT"
+    return
+  fi
 
+  # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
+  dotnet format analyzers "./CodeSmellApp/CodeSmellApp.sln" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
+}
 
-REVIEW_PROMPT=$(curl -fsSL https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md)
-# gh auth status
-copilot -p "${REVIEW_PROMPT} @_changes. save results to review-report.md" --yolo --model gpt-5.2
-rm -rf "$OUTPUT_DIR"
+# Authenticates the GitHub CLI using the provided personal access token.
+authenticate_github() {
+  printf "%s" "$GH_TOKEN" | tr -d '\r' | gh auth login --with-token
+}
+
+# Invokes Copilot CLI to summarize formatting diagnostics using the generated JSON report.
+run_format_prompt() {
+  local formatPrompt="$1"
+  copilot -p "$formatPrompt @$REPORT_OUT/format-report.json. Save output to the file $REPORT_OUT/format-report.md" --yolo --model gpt-5.2
+}
+
+# Captures original file content plus diffs for each changed C# file under the _changes folder.
+collect_file_diffs() {
+  mapfile -t files < <(git diff --name-only HEAD -- '*.cs')
+
+  for file in "${files[@]}"; do
+    local target_path="$OUTPUT_DIR/$file"
+    local target_dir
+    target_dir="$(dirname "$target_path")"
+    mkdir -p "$target_dir"
+
+    {
+      echo "FILE: $file"
+      echo
+      echo "----- ORIGINAL (HEAD) -----"
+      if git cat-file -e "HEAD:$file" 2>/dev/null; then
+        git show "HEAD:$file"
+      else
+        echo "[File not present in HEAD]"
+      fi
+      echo
+      echo "----- DIFF -----"
+      git diff HEAD -- "$file"
+    } > "$target_path"
+  done
+}
+
+# Restores the contributor branch locally so Copilot reviews the current remote state.
+restore_branch_state() {
+  local branchName="$1"
+  git checkout -B "$branchName" "origin/$branchName"
+}
+
+# Invokes Copilot CLI to perform the review prompt against the assembled change snapshots.
+run_review_prompt() {
+  local reviewPrompt="$1"
+  copilot -p "${reviewPrompt} @_changes. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2
+}
+
+# Deletes the _changes folder so subsequent runs start clean.
+cleanup_change_artifacts() {
+  rm -rf "$OUTPUT_DIR"
+}
+
+main() {
+  local branchName
+  branchName=$(validate_inputs "$@")
+
+  local formatPrompt
+  local reviewPrompt
+
+  prepare_branch_state "$branchName"
+  recreate_directory "$REPORT_OUT"
+  formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
+  reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
+
+  run_dotnet_format_for_changes
+  authenticate_github
+  run_format_prompt "$formatPrompt"
+
+  recreate_directory "$OUTPUT_DIR"
+  collect_file_diffs
+
+  restore_branch_state "$branchName"
+  run_review_prompt "$reviewPrompt"
+  cleanup_change_artifacts
+}
+
+main "$@"
