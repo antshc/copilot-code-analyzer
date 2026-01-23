@@ -1,6 +1,7 @@
-﻿#!/usr/bin/env bash
-readonly REPORT_OUT="./report"
-readonly OUTPUT_DIR="_changes"
+﻿#!/bin/bash
+readonly REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+readonly REPORT_OUT="$REPO_ROOT/report"
+readonly OUTPUT_DIR="$REPO_ROOT/_changes"
 readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
 readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md"
 
