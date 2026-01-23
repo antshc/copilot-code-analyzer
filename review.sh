@@ -108,7 +108,6 @@ collect_file_diffs() {
       git diff HEAD -- "$file"
     } > "$target_path"
 
-    log_status "Captured diff snapshot for $file"
   done
 }
 
