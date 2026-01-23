@@ -63,7 +63,7 @@ authenticate_github() {
 # Invokes Copilot CLI to summarize formatting diagnostics using the generated JSON report.
 run_format_prompt() {
   local formatPrompt="$1"
-  copilot -p "$formatPrompt @$REPORT_OUT/format-report.json. Save output to the file $REPORT_OUT/format-report.md" --yolo --model gpt-5.2
+  copilot -p "$formatPrompt @$REPORT_OUT/format-report.json. Save output to the file $REPORT_OUT/format-report.md" --yolo --model gpt-5.1-Codex-Mini
 }
 
 # Captures original file content plus diffs for each changed C# file under the _changes folder.

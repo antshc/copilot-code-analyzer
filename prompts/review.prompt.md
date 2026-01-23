@@ -45,6 +45,11 @@ Check cross-file contracts, shared invariants, and interactions.
 - [ ] Abstraction leaks
 
 ## Output Format (mandatory)
+```md
+# Code Analysis Report
+---
+
+## Findings (grouped by file)
 
 ### Critical (must fix)
 - **FileName:**
@@ -53,7 +58,6 @@ Check cross-file contracts, shared invariants, and interactions.
 - **Impact:** (data loss / security / perf / incident risk / correctness)
 - **Why it matters?:** (Explain your reasoning)
 - **Minimal fix:** (inline snippet or diff)
-- **Review comment:** (Review comment to add in pull request) 
 
 ### Suggestion (should fix)
 - **FileName:**
@@ -74,3 +78,4 @@ Check cross-file contracts, shared invariants, and interactions.
 - Prefer minimal diffs (smallest change that fixes the issue; no refactors unless needed for correctness/safety)
 - Assume analyzers validate style
 - If unsure, ask a clarifying question
+```
