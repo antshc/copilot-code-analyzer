@@ -21,7 +21,7 @@ validate_inputs() {
   local solutionPath="${4:-}"
   local formatFlag="${5:-}"
   local formatValue="${6:-}"
-  local formatPromptToggle="enable"
+  local formatPromptToggle="disable"
   if [[ -z "$ghTokenArg" || -z "$baseBranchName" || -z "$branchName" || -z "$solutionPath" ]]; then
     echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH [-format enable|disable]" >&2
     exit 1
