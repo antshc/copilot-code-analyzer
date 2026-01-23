@@ -103,7 +103,7 @@ restore_branch_state() {
 # Invokes Copilot CLI to perform the review prompt against the assembled change snapshots.
 run_review_prompt() {
   local reviewPrompt="$1"
-  copilot -p "${reviewPrompt} @_changes. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2
+  copilot -p "${reviewPrompt} @$OUTPUT_DIR. save results to $REPORT_OUT/review-report.md" --yolo --model gpt-5.2
 }
 
 # Deletes the _changes folder so subsequent runs start clean.
@@ -130,9 +130,9 @@ main() {
   recreate_directory "$OUTPUT_DIR"
   collect_file_diffs
 
-  restore_branch_state "$branchName"
   run_review_prompt "$reviewPrompt"
   cleanup_change_artifacts
+  restore_branch_state "$branchName"
 }
 
 main "$@"
