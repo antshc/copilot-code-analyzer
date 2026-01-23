@@ -4,6 +4,10 @@ readonly REPORT_OUT="$REPO_ROOT/report"
 readonly OUTPUT_DIR="$REPO_ROOT/_changes"
 readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
 readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md"
+readonly MINIMAL_EDITORCONFIG_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/rules/minimal.editorconfig"
+readonly EDITORCONFIG_PATH="$REPO_ROOT/.editorconfig"
+readonly EDITORCONFIG_BACKUP_PATH="$REPO_ROOT/.editorconfig.backup"
+EDITORCONFIG_TEMP_APPLIED=0
 
 log_status() {
   printf "\033[0;32m%s\033[0m\n" "$1"
@@ -17,9 +21,9 @@ validate_inputs() {
   local solutionPath="${4:-}"
   local formatFlag="${5:-}"
   local formatValue="${6:-}"
-  local formatPromptToggle="disable"
+  local formatPromptToggle="enable"
   if [[ -z "$ghTokenArg" || -z "$baseBranchName" || -z "$branchName" || -z "$solutionPath" ]]; then
-    echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH [-format enable|disable] (defaults to disable)" >&2
+    echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH [-format enable|disable]" >&2
     exit 1
   fi
 
@@ -81,6 +85,8 @@ run_dotnet_format_for_changes() {
     exit 1
   fi
 
+  apply_minimal_editorconfig
+
   log_status "Running dotnet format analyzers on:"
   IFS=' ' read -r -a files <<< "$fileList"
   for file in "${files[@]}"; do
@@ -89,6 +95,9 @@ run_dotnet_format_for_changes() {
 
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
   dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
+  local formatExitCode=$?
+  restore_editorconfig_state
+  return $formatExitCode
 }
 
 # Authenticates the GitHub CLI using the provided personal access token.
@@ -151,6 +160,46 @@ run_review_prompt() {
 cleanup_change_artifacts() {
   log_status "Cleaning up change artifacts"
   rm -rf "$OUTPUT_DIR"
+}
+
+# Temporarily enforces the curated minimal .editorconfig so dotnet format runs deterministically.
+apply_minimal_editorconfig() {
+  if [[ $EDITORCONFIG_TEMP_APPLIED -eq 1 ]]; then
+    return
+  fi
+
+  if [[ -f "$EDITORCONFIG_PATH" ]]; then
+    log_status "Backing up existing .editorconfig before running dotnet format"
+    cp "$EDITORCONFIG_PATH" "$EDITORCONFIG_BACKUP_PATH"
+  fi
+
+  log_status "Downloading minimal .editorconfig used solely for analyzer execution"
+  if ! curl -fsSL "$MINIMAL_EDITORCONFIG_URL" -o "$EDITORCONFIG_PATH"; then
+    log_status "Failed to download minimal .editorconfig; aborting format run"
+    if [[ -f "$EDITORCONFIG_BACKUP_PATH" ]]; then
+      mv "$EDITORCONFIG_BACKUP_PATH" "$EDITORCONFIG_PATH"
+    fi
+    exit 1
+  fi
+
+  EDITORCONFIG_TEMP_APPLIED=1
+}
+
+# Restores the contributor's .editorconfig (or removes the temporary file) after formatting completes.
+restore_editorconfig_state() {
+  if [[ $EDITORCONFIG_TEMP_APPLIED -ne 1 ]]; then
+    return
+  fi
+
+  if [[ -f "$EDITORCONFIG_BACKUP_PATH" ]]; then
+    log_status "Restoring original .editorconfig after dotnet format run"
+    mv "$EDITORCONFIG_BACKUP_PATH" "$EDITORCONFIG_PATH"
+  else
+    log_status "Removing temporary .editorconfig to leave the repo unchanged"
+    rm -f "$EDITORCONFIG_PATH"
+  fi
+
+  EDITORCONFIG_TEMP_APPLIED=0
 }
 
 main() {
