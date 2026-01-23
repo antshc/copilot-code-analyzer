@@ -1,5 +1,11 @@
 root = true
 
+[**/*.g.cs]
+generated_code = true
+
+[**/*.Designer.cs]
+generated_code = true
+
 [*]
 end_of_line = crlf
 indent_style = space
