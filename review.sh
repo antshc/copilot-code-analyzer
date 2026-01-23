@@ -8,12 +8,13 @@ readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-cod
 validate_inputs() {
   local ghTokenArg="${1:-}"
   local branchName="${2:-}"
-  if [[ -z "$ghTokenArg" || -z "$branchName" ]]; then
-    echo "Usage: $0 GH_TOKEN BRANCH_NAME" >&2
+  local solutionPath="${3:-}"
+  if [[ -z "$ghTokenArg" || -z "$branchName" || -z "$solutionPath" ]]; then
+    echo "Usage: $0 GH_TOKEN BRANCH_NAME SOLUTION_PATH" >&2
     exit 1
   fi
 
-  printf "%s\n%s" "$ghTokenArg" "$branchName" 
+  printf "%s\n%s\n%s" "$ghTokenArg" "$branchName" "$solutionPath"
 }
 
 # Synchronizes to the remote branch and rewinds to the merge-base for a clean diff.
@@ -39,17 +40,18 @@ download_prompt() {
 
 # Runs dotnet-format analyzers limited to changed C# files to generate the report artifact.
 run_dotnet_format_for_changes() {
+  local solutionPath="$1"
   local fileList
   fileList=$(git diff --name-only HEAD -- '*.cs' | paste -sd' ' -)
   echo "$fileList"
 
   if [[ -z "$fileList" ]]; then
-    dotnet format analyzers "./CodeSmellApp/CodeSmellApp.sln" --no-restore --verify-no-changes --report "$REPORT_OUT"
+    dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --report "$REPORT_OUT"
     return
   fi
 
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
-  dotnet format analyzers "./CodeSmellApp/CodeSmellApp.sln" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
+  dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
 }
 
 # Authenticates the GitHub CLI using the provided personal access token.
@@ -112,6 +114,7 @@ main() {
   mapfile -t parsedArgs < <(validate_inputs "$@")
   local ghToken="${parsedArgs[0]}"
   local branchName="${parsedArgs[1]}"
+  local solutionPath="${parsedArgs[2]}"
 
   local formatPrompt
   local reviewPrompt
@@ -121,7 +124,7 @@ main() {
   formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
   reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
 
-  run_dotnet_format_for_changes
+  run_dotnet_format_for_changes "$solutionPath"
   authenticate_github "$ghToken"
   run_format_prompt "$formatPrompt"
 
