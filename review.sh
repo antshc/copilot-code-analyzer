@@ -15,12 +15,34 @@ validate_inputs() {
   local baseBranchName="${2:-}"
   local branchName="${3:-}"
   local solutionPath="${4:-}"
+  local formatFlag="${5:-}"
+  local formatValue="${6:-}"
+  local formatPromptToggle="enable"
   if [[ -z "$ghTokenArg" || -z "$baseBranchName" || -z "$branchName" || -z "$solutionPath" ]]; then
-    echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH" >&2
+    echo "Usage: $0 GH_TOKEN BASE_BRANCH_NAME BRANCH_NAME SOLUTION_PATH [-format enable|disable]" >&2
     exit 1
   fi
 
-  printf "%s\n%s\n%s\n%s" "$ghTokenArg" "$baseBranchName" "$branchName" "$solutionPath"
+  if [[ -n "$formatFlag" || -n "$formatValue" ]]; then
+    if [[ "$formatFlag" != "-format" ]]; then
+      echo "Optional format toggle must start with '-format'." >&2
+      exit 1
+    fi
+
+    if [[ -z "$formatValue" ]]; then
+      echo "'-format' requires a value of 'enable' or 'disable'." >&2
+      exit 1
+    fi
+
+    if [[ "$formatValue" != "enable" && "$formatValue" != "disable" ]]; then
+      echo "FORMAT_PROMPT value must be 'enable' or 'disable'." >&2
+      exit 1
+    fi
+
+    formatPromptToggle="$formatValue"
+  fi
+
+  printf "%s\n%s\n%s\n%s\n%s" "$ghTokenArg" "$baseBranchName" "$branchName" "$solutionPath" "$formatPromptToggle"
 }
 
 # Synchronizes to the remote branch and rewinds to the merge-base for a clean diff.
@@ -139,22 +161,27 @@ main() {
   local baseBranchName="${parsedArgs[1]}"
   local branchName="${parsedArgs[2]}"
   local solutionPath="${parsedArgs[3]}"
+  local formatPromptToggle="${parsedArgs[4]}"
 
   local formatPrompt
   local reviewPrompt
 
   prepare_branch_state "$baseBranchName" "$branchName"
   recreate_directory "$REPORT_OUT"
-  formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
-  reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
 
-  run_dotnet_format_for_changes "$solutionPath"
-  authenticate_github "$ghToken"
-  run_format_prompt "$formatPrompt"
+  if [[ "$formatPromptToggle" == "enable" ]]; then
+    run_dotnet_format_for_changes "$solutionPath"
+    authenticate_github "$ghToken"
+    formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
+    run_format_prompt "$formatPrompt"
+  else
+    log_status "Format prompt disabled; skipping analyzer and summary steps"
+  fi
 
   recreate_directory "$OUTPUT_DIR"
   collect_file_diffs
 
+  reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
   run_review_prompt "$reviewPrompt"
   cleanup_change_artifacts
   restore_branch_state "$branchName"
