@@ -1,3 +1,10 @@
+## Installation
+```
+winget install -e --id cURL.cURL
+winget install GitHub.Copilot
+winget install -e --id Git.Git
+```
+
 ## Create patch
 ```
 ### Create patch from the feature branch
