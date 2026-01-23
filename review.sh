@@ -62,7 +62,7 @@ run_dotnet_format_for_changes() {
   log_status "Running dotnet format analyzers on:"
   IFS=' ' read -r -a files <<< "$fileList"
   for file in "${files[@]}"; do
-    log_status "$file"
+    echo "$file"
   done
 
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
