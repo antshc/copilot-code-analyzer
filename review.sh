@@ -59,13 +59,12 @@ run_dotnet_format_for_changes() {
     exit 1
   fi
 
-  log_status "Detected changed files:"
+  log_status "Running dotnet format analyzers on:"
   IFS=' ' read -r -a files <<< "$fileList"
   for file in "${files[@]}"; do
     log_status "$file"
   done
 
-  log_status "Running dotnet format analyzers on: $fileList"
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
   dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
 }
