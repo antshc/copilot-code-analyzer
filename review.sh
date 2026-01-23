@@ -46,8 +46,7 @@ run_dotnet_format_for_changes() {
   echo "$fileList"
 
   if [[ -z "$fileList" ]]; then
-    dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --report "$REPORT_OUT"
-    return
+    exit 1
   fi
 
   # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
