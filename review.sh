@@ -6,17 +6,14 @@ readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-cod
 
 # Validates required inputs and environment so later steps fail fast.
 validate_inputs() {
-  if [[ ${1:-} == "" ]]; then
-    echo "Usage: $0 BRANCH_NAME" >&2
+  local ghTokenArg="${1:-}"
+  local branchName="${2:-}"
+  if [[ -z "$ghTokenArg" || -z "$branchName" ]]; then
+    echo "Usage: $0 GH_TOKEN BRANCH_NAME" >&2
     exit 1
   fi
 
-  if [[ -z ${GH_TOKEN:-} ]]; then
-    echo "GH_TOKEN environment variable must be set for gh auth login." >&2
-    exit 1
-  fi
-
-  printf "%s" "$1"
+  printf "%s\n%s" "$ghTokenArg" "$branchName" 
 }
 
 # Synchronizes to the remote branch and rewinds to the merge-base for a clean diff.
@@ -57,7 +54,8 @@ run_dotnet_format_for_changes() {
 
 # Authenticates the GitHub CLI using the provided personal access token.
 authenticate_github() {
-  printf "%s" "$GH_TOKEN" | tr -d '\r' | gh auth login --with-token
+  local ghToken="$1"
+  printf "%s" "$ghToken" | tr -d '\r' | gh auth login --with-token
 }
 
 # Invokes Copilot CLI to summarize formatting diagnostics using the generated JSON report.
@@ -110,8 +108,10 @@ cleanup_change_artifacts() {
 }
 
 main() {
-  local branchName
-  branchName=$(validate_inputs "$@")
+  local -a parsedArgs
+  mapfile -t parsedArgs < <(validate_inputs "$@")
+  local ghToken="${parsedArgs[0]}"
+  local branchName="${parsedArgs[1]}"
 
   local formatPrompt
   local reviewPrompt
@@ -122,7 +122,7 @@ main() {
   reviewPrompt=$(download_prompt "$REVIEW_PROMPT_URL")
 
   run_dotnet_format_for_changes
-  authenticate_github
+  authenticate_github "$ghToken"
   run_format_prompt "$formatPrompt"
 
   recreate_directory "$OUTPUT_DIR"
