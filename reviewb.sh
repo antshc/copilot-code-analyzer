@@ -15,4 +15,4 @@ if [[ -z "$branchName" ]]; then
   exit 1
 fi
 
-"$REVIEW_SCRIPT" "$GH_TOKEN" "$branchName"
+"$REVIEW_SCRIPT" "$GH_TOKEN" "$branchName" "./CodeSmellApp/CodeSmellApp.sln"
