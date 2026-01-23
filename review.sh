@@ -1,6 +1,4 @@
 ﻿#!/usr/bin/env bash
-set -euo pipefail
-
 readonly REPORT_OUT="./report"
 readonly OUTPUT_DIR="_changes"
 readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
