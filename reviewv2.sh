@@ -213,6 +213,9 @@ run_analyzers_for_project() {
     fi
   fi
 
+  echo "========================================================"
+  echo "$filteredOutput"
+
   : > "$diagPath"
   declare -A fileDiagnostics
   local -a diagFileOrder
