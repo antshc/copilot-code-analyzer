@@ -136,6 +136,7 @@ run_dotnet_format_for_changes() {
   fi
 
   apply_minimal_editorconfig
+  sleep 2
 
   local projectPath
   for projectPath in "${!projectFileMap[@]}"; do
@@ -305,6 +306,7 @@ main() {
   local reviewPrompt
 
   prepare_branch_state "$baseBranchName" "$branchName"
+  sleep 2
   recreate_directory "$REPORT_OUT"
 
   if [[ "$formatPromptToggle" == "enable" ]]; then
