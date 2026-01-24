@@ -205,7 +205,8 @@ run_analyzers_for_project() {
     grepArgs=(-F)
     local trackedFile
     for trackedFile in "${includeArgsRef[@]}"; do
-      grepArgs+=(-e "$trackedFile")
+      fileName="$(basename "$trackedFile")"
+      grepArgs+=(-e "$fileName")
     done
 
     if ! filteredOutput=$(grep "${grepArgs[@]}" "$buildLogPath"); then
