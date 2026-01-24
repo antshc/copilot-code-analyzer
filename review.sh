@@ -186,7 +186,7 @@ run_analyzers_for_project() {
   local reportPath
   reportPath="$REPORT_OUT/${projectName}-format-report.json"
   echo "dotnet format analyzers \"$projectPath\" --no-restore --verify-no-changes --include ${includeArgsRef[*]} --report \"$reportPath\""
-  dotnet format analyzers "$projectPath" --no-restore --verify-no-changes --include ${includeArgsRef[@]} --report "$reportPath"
+  dotnet format analyzers "$projectPath" -v diagnostic --no-restore --verify-no-changes --include ${includeArgsRef[@]} --report "$reportPath"
 }
 
 # Authenticates the GitHub CLI using the provided personal access token.
