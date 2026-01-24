@@ -163,7 +163,7 @@ run_analyzers_for_project() {
   projectName="$(basename "$projectPath" .csproj)"
   local reportPath
   reportPath="$REPORT_OUT/${projectName}-format-report.json"
-  echo "${includeArgsRef[@]}"
+  echo "dotnet format analyzers \"$projectPath\" --no-restore --verify-no-changes --include ${includeArgsRef[*]} --report \"$reportPath\""
   dotnet format analyzers "$projectPath" --no-restore --verify-no-changes --include ${includeArgsRef[@]} --report "$reportPath"
 }
 
