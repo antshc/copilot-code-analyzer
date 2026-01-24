@@ -142,22 +142,11 @@ run_dotnet_format_for_changes() {
     mapfile -t projectFiles <<< "${projectFileMap[$projectPath]}"
     log_status "Running dotnet format analyzers for $projectPath with:"
     local trackedFile
-    local projectDir
-    projectDir="$(dirname "$projectPath")"
     local -a includeArgs
     includeArgs=()
     for trackedFile in "${projectFiles[@]}"; do
       printf "  %s\n" "$trackedFile"
-      local includeCandidate
-      includeCandidate="$trackedFile"
-      local prefix
-      prefix="$projectDir/"
-      if [[ "$trackedFile" == "$prefix"* ]]; then
-        includeCandidate="${trackedFile#"$prefix"}"
-      elif [[ "$trackedFile" == "$projectDir" ]]; then
-        includeCandidate="${trackedFile#"$projectDir"}"
-      fi
-      includeArgs+=("$includeCandidate")
+      includeArgs+=("$trackedFile")
     done
 
     run_analyzers_for_project "$projectPath" includeArgs
