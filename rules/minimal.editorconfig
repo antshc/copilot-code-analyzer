@@ -14,3 +14,5 @@ indent_size = 4
 
 # Remove unnecessary using directives
 dotnet_diagnostic.IDE0005.severity = warning
+# Missing XML comment for publicly visible type or member 
+dotnet_diagnostic.CS1591.severity = none
