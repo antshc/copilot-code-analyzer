@@ -14,4 +14,4 @@ indent_size = 2
 indent_size = 4
 
 # Remove unnecessary using directives
-dotnet_diagnostic.IDE0005.severity = error
+dotnet_diagnostic.IDE0005.severity = warning
