@@ -74,30 +74,100 @@ download_prompt() {
   curl -fsSL "$url"
 }
 
+# Determines the .csproj that owns a given source file by walking up the directory tree.
+find_project_for_file() {
+  local sourceFile="$1"
+  local searchDir
+  searchDir="$(dirname "$sourceFile")"
+
+  while true; do
+    local currentDir="$REPO_ROOT/$searchDir"
+    if [[ -d "$currentDir" ]]; then
+      shopt -s nullglob
+      local candidates=("$currentDir"/*.csproj)
+      shopt -u nullglob
+      local candidatePath
+      for candidatePath in "${candidates[@]}"; do
+        local relativePath="${candidatePath#"$REPO_ROOT"/}"
+        printf "%s\n" "$relativePath"
+        return 0
+      done
+    fi
+
+    if [[ "$searchDir" == "." || "$searchDir" == "/" ]]; then
+      break
+    fi
+
+    searchDir="$(dirname "$searchDir")"
+  done
+
+  return 1
+}
+
 # Runs dotnet-format analyzers limited to changed C# files to generate the report artifact.
 run_dotnet_format_for_changes() {
   local solutionPath="$1"
-  local fileList
-  fileList=$(git diff --name-only HEAD -- '*.cs' | paste -sd' ' -)
+  local -a changedFiles
+  mapfile -t changedFiles < <(git diff --name-only HEAD -- '*.cs')
 
-  if [[ -z "$fileList" ]]; then
+  if [[ ${#changedFiles[@]} -eq 0 ]]; then
     log_status "No changed C# files detected; skipping analyzer run"
+    exit 1
+  fi
+
+  declare -A projectFileMap
+  local sourceFile
+  for sourceFile in "${changedFiles[@]}"; do
+    local projectPath
+    if ! projectPath=$(find_project_for_file "$sourceFile"); then
+      echo "Unable to resolve a .csproj for $sourceFile; skipping" >&2
+      continue
+    fi
+
+    if [[ -n "${projectFileMap[$projectPath]}" ]]; then
+      projectFileMap["$projectPath"]+=$'\n'
+    fi
+    projectFileMap["$projectPath"]+="$sourceFile"
+  done
+
+  if [[ ${#projectFileMap[@]} -eq 0 ]]; then
+    echo "Changed files detected but none matched a project; aborting analyzer run" >&2
     exit 1
   fi
 
   apply_minimal_editorconfig
 
-  log_status "Running dotnet format analyzers on:"
-  IFS=' ' read -r -a files <<< "$fileList"
-  for file in "${files[@]}"; do
-    echo "$file"
+  local projectPath
+  for projectPath in "${!projectFileMap[@]}"; do
+    mapfile -t projectFiles <<< "${projectFileMap[$projectPath]}"
+    log_status "Running dotnet format analyzers for $projectPath with:"
+    local trackedFile
+    local projectDir
+    projectDir="$(dirname "$projectPath")"
+    local -a includeArgs
+    includeArgs=()
+    for trackedFile in "${projectFiles[@]}"; do
+      printf "  %s\n" "$trackedFile"
+      local includeCandidate
+      includeCandidate="$trackedFile"
+      local prefix
+      prefix="$projectDir/"
+      if [[ "$trackedFile" == "$prefix"* ]]; then
+        includeCandidate="${trackedFile#"$prefix"}"
+      elif [[ "$trackedFile" == "$projectDir" ]]; then
+        includeCandidate="${trackedFile#"$projectDir"}"
+      fi
+      includeArgs+=("$includeCandidate")
+    done
+
+    if ! dotnet format analyzers "$projectPath" --no-restore --verify-no-changes --include "${includeArgs[@]}" --report "$REPORT_OUT"; then
+      restore_editorconfig_state
+      return 1
+    fi
   done
 
-  # dotnet-format CLI consumes external analyzers for consistency with IDE diagnostics.
-  dotnet format analyzers "$solutionPath" --no-restore --verify-no-changes --include $fileList --report "$REPORT_OUT"
-  local formatExitCode=$?
   restore_editorconfig_state
-  return $formatExitCode
+  return 0
 }
 
 # Authenticates the GitHub CLI using the provided personal access token.
