@@ -140,16 +140,21 @@ run_dotnet_format_for_changes() {
   local projectPath
   for projectPath in "${!projectFileMap[@]}"; do
     mapfile -t projectFiles <<< "${projectFileMap[$projectPath]}"
-    log_status "Running dotnet format analyzers for $projectPath with:"
+    log_status "Running dotnet format analyzers for $projectPath."
     local trackedFile
     local -a includeArgs
     includeArgs=()
     for trackedFile in "${projectFiles[@]}"; do
-      printf "  %s\n" "$trackedFile"
       includeArgs+=("$trackedFile")
     done
 
+    log_status "run_analyzers_for_project for $projectPath."
+    local startTime endTime elapsed
+    startTime=$(date +%s)
     run_analyzers_for_project "$projectPath" includeArgs
+    endTime=$(date +%s)
+    elapsed=$((endTime - startTime))
+    log_status "run_analyzers_for_project for $projectPath completed in ${elapsed} seconds."
   done
 
   local -a reportFiles
