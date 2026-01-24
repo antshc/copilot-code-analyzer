@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSmellApp", "CodeSmellApp/CodeSmellApp.csproj", "{1B88AC95-CA9F-4D45-BAEF-43CAFDD7CE26}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSmellApp", "CodeSmellApp\CodeSmellApp.csproj", "{1B88AC95-CA9F-4D45-BAEF-43CAFDD7CE26}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSmellApp2", "CodeSmellApp2\CodeSmellApp2.csproj", "{83CD2BF0-1D3A-47C4-A1DA-C5E3A7783B30}"
 EndProject
