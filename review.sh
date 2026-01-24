@@ -152,6 +152,19 @@ run_dotnet_format_for_changes() {
     run_analyzers_for_project "$projectPath" includeArgs
   done
 
+  local -a reportFiles
+  mapfile -t reportFiles < <(find "$REPORT_OUT" -maxdepth 1 -name '*-format-report.json' -print | sort)
+
+  local reportFile
+  for reportFile in "${reportFiles[@]}"; do
+    local projectName
+    projectName="$(basename "$reportFile")"
+    projectName="${projectName%-format-report.json}"
+    jq --arg project "$projectName" '{projectName: $project, report: .}' "$reportFile"
+  done
+} | jq -s '{projectReports: .}' > "$REPORT_OUT/format-report.json"; then
+  echo "Failed to merge analyzer reports into $REPORT_OUT/format-report.json" >&2
+
   restore_editorconfig_state
   return 0
 }
