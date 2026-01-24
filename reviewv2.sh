@@ -2,7 +2,6 @@
 readonly REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 readonly REPORT_OUT="$REPO_ROOT/report"
 readonly OUTPUT_DIR="$REPO_ROOT/_changes"
-readonly FORMAT_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/format.prompt.md"
 readonly REVIEW_PROMPT_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md"
 readonly MINIMAL_EDITORCONFIG_URL="https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/rules/minimal.editorconfig"
 readonly EDITORCONFIG_PATH="$REPO_ROOT/.editorconfig"
@@ -379,12 +378,10 @@ main() {
 
   if [[ "$formatPromptToggle" == "enable" ]]; then
     run_analyzer_build_for_changes "$solutionPath"
-    authenticate_github "$ghToken"
-    formatPrompt=$(download_prompt "$FORMAT_PROMPT_URL")
-    run_format_prompt "$formatPrompt"
   else
     log_status "Format prompt disabled; skipping analyzer and summary steps"
   fi
+  authenticate_github "$ghToken"
 
   recreate_directory "$OUTPUT_DIR"
   collect_file_diffs
