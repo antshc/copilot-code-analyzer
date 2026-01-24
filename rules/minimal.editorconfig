@@ -7,7 +7,6 @@ generated_code = true
 generated_code = true
 
 [*]
-end_of_line = crlf
 indent_style = space
 indent_size = 2
 [*.cs]
