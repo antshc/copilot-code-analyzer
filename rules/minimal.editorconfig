@@ -14,5 +14,18 @@ indent_size = 4
 
 # Remove unnecessary using directives
 dotnet_diagnostic.IDE0005.severity = warning
+
 # Missing XML comment for publicly visible type or member 
 dotnet_diagnostic.CS1591.severity = none
+
+# CA1305: Specify I Format Provider. Release: 5.0. Category: Globalization. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1305
+dotnet_diagnostic.CA1305.severity = none
+
+# CA1307: Specify String Comparison. Release: 5.0. Category: Globalization. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1307
+dotnet_diagnostic.CA1307.severity = none
+
+# CA1309: Use Ordinal String Comparison. Release: 5.0. Category: Globalization. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1309
+dotnet_diagnostic.CA1309.severity = none
+
+# CA1310: Specify String Comparison. Release: 5.0. Category: Globalization. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1310
+dotnet_diagnostic.CA1310.severity = none
