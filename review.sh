@@ -104,7 +104,7 @@ find_project_for_file() {
   return 1
 }
 
-# Runs dotnet-format analyzers limited to changed C# files to generate the report artifact.
+# Runs dotnet format analyzers limited to changed C# files to generate the report artifact.
 run_dotnet_format_for_changes() {
   local solutionPath="$1"
   local -a changedFiles
@@ -160,14 +160,21 @@ run_dotnet_format_for_changes() {
       includeArgs+=("$includeCandidate")
     done
 
-    if ! dotnet format analyzers "$projectPath" --no-restore --verify-no-changes --include "${includeArgs[@]}" --report "$REPORT_OUT"; then
-      restore_editorconfig_state
-      return 1
-    fi
+    run_analyzers_for_project "$projectPath" includeArgs
   done
 
   restore_editorconfig_state
   return 0
+}
+
+run_analyzers_for_project() {
+  local projectPath="$1"
+  local -n includeArgsRef=$2
+  local projectName
+  projectName="$(basename "$projectPath" .csproj)"
+  local reportPath
+  reportPath="$REPORT_OUT/${projectName}-format-report.json"
+  dotnet format analyzers "$projectPath" --no-restore --verify-no-changes --include "${includeArgsRef[@]}" --report "$reportPath"
 }
 
 # Authenticates the GitHub CLI using the provided personal access token.
