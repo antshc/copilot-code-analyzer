@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSmellApp", "CodeSmellAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSmellApp2", "CodeSmellApp2\CodeSmellApp2.csproj", "{83CD2BF0-1D3A-47C4-A1DA-C5E3A7783B30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReviewApp", "ReviewApp\ReviewApp.csproj", "{E8F3D421-FFA1-48A2-909D-56E03FB05CDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{83CD2BF0-1D3A-47C4-A1DA-C5E3A7783B30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83CD2BF0-1D3A-47C4-A1DA-C5E3A7783B30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83CD2BF0-1D3A-47C4-A1DA-C5E3A7783B30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8F3D421-FFA1-48A2-909D-56E03FB05CDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8F3D421-FFA1-48A2-909D-56E03FB05CDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8F3D421-FFA1-48A2-909D-56E03FB05CDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8F3D421-FFA1-48A2-909D-56E03FB05CDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
