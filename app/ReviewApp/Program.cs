@@ -25,7 +25,7 @@ public class ReviewWorkflow
 
         Console.WriteLine("Starting automated review workflow");
 
-        // PrepareBranchState(appConfig.BaseBranchName, appConfig.BranchName);
+        await PrepareBranchState(appConfig.BaseBranchName, appConfig.BranchName);
         RecreateDirectory(ReportOut);
 
         if (appConfig.AnalyzersEnabled)
@@ -37,15 +37,15 @@ public class ReviewWorkflow
             Console.WriteLine("Format prompt disabled; skipping analyzer and summary steps");
         }
 
-        AuthenticateGitHub(appConfig.CopilotToken);
+        // await AuthenticateGitHub(appConfig.CopilotToken);
         RecreateDirectory(OutputDir);
         await CollectChanges();
 
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
         string reviewPrompt = await DownloadContent(ReviewPromptUrl);
-        RunReviewPrompt(reviewPrompt);
+        await RunReviewPrompt(reviewPrompt, appConfig.CopilotToken);
         CleanupChangeArtifacts();
-        RestoreBranchState(appConfig.BranchName);
+        await RestoreBranchState(appConfig.BranchName);
 
         Console.WriteLine("Review workflow completed");
     }
@@ -82,12 +82,12 @@ public class ReviewWorkflow
 
     private static async Task<string> GetRepoRoot() => await RunGitCommand("rev-parse --show-toplevel");
 
-    private static void PrepareBranchState(string baseBranchName, string branchName)
+    private static async Task PrepareBranchState(string baseBranchName, string branchName)
     {
         Console.WriteLine($"Preparing branch state using base '{baseBranchName}' against '{branchName}'");
-        RunGitCommand("fetch");
-        RunGitCommand($"checkout origin/{branchName}");
-        RunGitCommand($"reset --soft $(git merge-base HEAD origin/{baseBranchName})");
+        await RunGitCommand("fetch");
+        await RunGitCommand($"checkout origin/{branchName}");
+        await RunGitCommand($"reset --soft $(git merge-base HEAD origin/{baseBranchName})");
     }
 
     private static void RecreateDirectory(string targetDir)
@@ -110,14 +110,42 @@ public class ReviewWorkflow
 
         await ApplyMinimalEditorConfig();
 
-        foreach (var projectPath in changedFiles.Select(FindProjectForFile).Distinct())
+        // Maps each project to its set of changed files, handling cases where FindProjectForFile may throw.
+        var projectToFiles = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var filePath in changedFiles)
+        {
+            var projectPath = FindProjectForFile(filePath);
+
+            if (!projectToFiles.TryGetValue(projectPath, out var files))
+            {
+                files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                projectToFiles[projectPath] = files;
+            }
+
+            files.Add(filePath);
+        }
+
+        foreach (var projectPath in projectToFiles.Keys)
         {
             Console.WriteLine($"Running analyzer-enabled build for {projectPath}");
 
             string buildOutput = await RunDotnetCommand(
                                      $"build {projectPath} -p:EnableNETAnalyzers=true -p:AnalysisMode=Recommended -p:EnforceCodeStyleInBuild=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false -p:GenerateDocumentationFile=true");
 
-            await File.WriteAllTextAsync(ReportOut, buildOutput);
+            var projectName = Path.GetFileNameWithoutExtension(projectPath);
+            var buildLogFileName = Path.Combine(ReportOut, $"{projectName}.log");
+            await File.WriteAllTextAsync(buildLogFileName, buildOutput);
+
+            var buildLogFileLines = await File.ReadAllLinesAsync(buildLogFileName);
+            var fileNames = projectToFiles[projectPath].Select(Path.GetFileNameWithoutExtension);
+
+            var filteredLines = buildLogFileLines
+                .Where(line => fileNames.Any(line.Contains))
+                .ToArray();
+
+            var buildDiagFileName = Path.Combine(ReportOut, $"{projectName}.diag.log");
+            await File.WriteAllTextAsync(buildDiagFileName, string.Join(Environment.NewLine, filteredLines));
         }
 
         RestoreEditorConfigState();
@@ -131,6 +159,8 @@ public class ReviewWorkflow
         string[] changedFiles = filePaths
             .Where(f => !string.IsNullOrWhiteSpace(f))
             .Where(f => f.EndsWith(".cs")).ToArray();
+
+        changedFiles = changedFiles.Where(f => !f.Contains("Program.cs")).ToArray();
 
         if (!changedFiles.Any())
         {
@@ -216,16 +246,16 @@ public class ReviewWorkflow
             Directory.CreateDirectory(targetDir);
 
             await File.WriteAllTextAsync(targetPath, $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n" +
-                                                     RunGitCommand($"show HEAD:{file}") +
+                                                     await RunGitCommand($"show HEAD:{file}") +
                                                      "\n----- DIFF -----\n" +
-                                                     RunGitCommand($"diff HEAD -- {file}"));
+                                                     await RunGitCommand($"diff HEAD -- {file}"));
         }
     }
 
-    private static void RunReviewPrompt(string reviewPrompt)
+    private static async Task RunReviewPrompt(string reviewPrompt, string token)
     {
         Console.WriteLine("Running Copilot review prompt on collected diffs");
-        RunCopilotCommand($"-p \"{reviewPrompt} @{OutputDir}. save results to {ReportOut}/review-report.md\" --yolo --model gpt-5.2");
+        await RunCopilotCommand($"-p \"{reviewPrompt} @{OutputDir}. save results to {ReportOut}/review-report.md\" --yolo --model gpt-5.2", token);
     }
 
     private static void CleanupChangeArtifacts()
@@ -238,35 +268,21 @@ public class ReviewWorkflow
         }
     }
 
-    private static void RestoreBranchState(string branchName)
+    private static async Task RestoreBranchState(string branchName)
     {
         Console.WriteLine($"Restoring branch state for {branchName}");
-        RunGitCommand($"checkout -B {branchName} origin/{branchName}");
+        await RunGitCommand($"checkout -B {branchName} origin/{branchName}");
     }
 
     private static async Task<string> RunGitCommand(string arguments) => await RunProcessCommand("git", arguments);
 
     private static async Task<string> RunDotnetCommand(string command) => await RunProcessCommand("dotnet", command);
 
-    private static async Task<string> RunCopilotCommand(string command) => await RunProcessCommand("copilot", command);
+    private static async Task<string> RunCopilotCommand(string command, string token) => await RunProcessCommand("copilot", command, token);
 
     private static async Task<string> RunCurlCommand(string command) => await RunProcessCommand("curl", command);
 
-    private static async Task AuthenticateGitHub(string ghToken)
-    {
-        Console.WriteLine("Authenticating GitHub CLI session");
-
-        if (string.IsNullOrWhiteSpace(ghToken))
-        {
-            throw new ArgumentException("GitHub token must be provided.", nameof(ghToken));
-        }
-
-        Console.WriteLine("Authenticating GitHub CLI session");
-
-        await RunProcessCommand("gh", "auth login --with-token", ghToken);
-    }
-
-    private static async Task<string> RunProcessCommand(string fileName, string arguments, string input = "", CancellationToken cancellationToken = default)
+    private static async Task<string> RunProcessCommand(string fileName, string arguments, string ghToken = "", CancellationToken cancellationToken = default)
     {
         // Executes an external process and returns its output; trim behavior is configurable per caller.
         var process = new Process
@@ -287,10 +303,9 @@ public class ReviewWorkflow
 
         process.Start();
 
-        if (!string.IsNullOrWhiteSpace(input))
+        if (!string.IsNullOrWhiteSpace(ghToken))
         {
-            process.StandardInput.WriteLine(input);
-            process.StandardInput.Close();
+            process.StartInfo.Environment["GH_TOKEN"] = ghToken;
         }
 
         var stdoutBuffer = new StringBuilder();
