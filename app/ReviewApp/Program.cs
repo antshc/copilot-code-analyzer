@@ -87,7 +87,8 @@ public class ReviewWorkflow
         Console.WriteLine($"Preparing branch state using base '{baseBranchName}' against '{branchName}'");
         await RunGitCommand("fetch");
         await RunGitCommand($"checkout origin/{branchName}");
-        await RunGitCommand($"reset --soft $(git merge-base HEAD origin/{baseBranchName})");
+        var commit = await RunGitCommand($"merge-base HEAD origin/{baseBranchName}");
+        await RunGitCommand($"reset --soft {commit}");
     }
 
     private static void RecreateDirectory(string targetDir)
