@@ -1,21 +1,26 @@
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 public class ReviewWorkflow
 {
-    private static readonly string RepoRoot = GetRepoRoot();
-    private static readonly string ReportOut = Path.Combine(RepoRoot, "report");
-    private static readonly string OutputDir = Path.Combine(RepoRoot, "_changes");
     private static readonly string ReviewPromptUrl = "https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md";
     private static readonly string MinimalEditorConfigUrl = "https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/rules/minimal.editorconfig";
-    private static readonly string EditorConfigPath = Path.Combine(RepoRoot, ".editorconfig");
-    private static readonly string EditorConfigBackupPath = Path.Combine(RepoRoot, ".editorconfig.backup");
+
+    private static string? RepoRoot;
+    private static string? ReportOut;
+    private static string? OutputDir;
+    private static string? EditorConfigPath;
+    private static string? EditorConfigBackupPath;
     private static bool EditorConfigTempApplied = false;
 
     public static async Task Main(string[] args)
     {
+        RepoRoot = await GetRepoRoot();
+        ReportOut = Path.Combine(RepoRoot, "report");
+        OutputDir = Path.Combine(RepoRoot, "_changes");
+        EditorConfigPath = Path.Combine(RepoRoot, ".editorconfig");
+        EditorConfigBackupPath = Path.Combine(RepoRoot, ".editorconfig.backup");
         var appConfig = await ReadAppArgs(args);
 
         Console.WriteLine("Starting automated review workflow");
@@ -37,7 +42,7 @@ public class ReviewWorkflow
         await CollectChanges();
 
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
-        string reviewPrompt = DownloadContent(ReviewPromptUrl);
+        string reviewPrompt = await DownloadContent(ReviewPromptUrl);
         RunReviewPrompt(reviewPrompt);
         CleanupChangeArtifacts();
         RestoreBranchState(appConfig.BranchName);
@@ -75,7 +80,7 @@ public class ReviewWorkflow
         return new AppConfig(ghToken, baseBranchName, branchName, analyzersEnabled);
     }
 
-    private static string GetRepoRoot() => RunGitCommand("rev-parse --show-toplevel");
+    private static async Task<string> GetRepoRoot() => await RunGitCommand("rev-parse --show-toplevel");
 
     private static void PrepareBranchState(string baseBranchName, string branchName)
     {
@@ -101,7 +106,7 @@ public class ReviewWorkflow
     {
         Console.WriteLine("Running analyzer-enabled build for changes");
 
-        IReadOnlyList<string> changedFiles = GetChangedFiles();
+        IReadOnlyList<string> changedFiles = await GetChangedFiles();
 
         await ApplyMinimalEditorConfig();
 
@@ -109,17 +114,19 @@ public class ReviewWorkflow
         {
             Console.WriteLine($"Running analyzer-enabled build for {projectPath}");
 
-            RunDotnetCommand(
-                $"build {projectPath} -p:EnableNETAnalyzers=true -p:AnalysisMode=Recommended -p:EnforceCodeStyleInBuild=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false -p:GenerateDocumentationFile=true");
+            string buildOutput = await RunDotnetCommand(
+                                     $"build {projectPath} -p:EnableNETAnalyzers=true -p:AnalysisMode=Recommended -p:EnforceCodeStyleInBuild=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false -p:GenerateDocumentationFile=true");
+
+            await File.WriteAllTextAsync(ReportOut, buildOutput);
         }
 
         RestoreEditorConfigState();
     }
 
-    private static IReadOnlyList<string> GetChangedFiles()
+    private static async Task<IReadOnlyList<string>> GetChangedFiles()
     {
-        string files = RunGitCommand("diff --name-only HEAD");
-        string[] filePaths = files.Split('\n');
+        string files = await RunGitCommand("diff --name-only HEAD");
+        string[] filePaths = files.Split(Environment.NewLine);
 
         string[] changedFiles = filePaths
             .Where(f => !string.IsNullOrWhiteSpace(f))
@@ -166,15 +173,16 @@ public class ReviewWorkflow
         }
 
         Console.WriteLine("Downloading minimal .editorconfig used solely for analyzer execution");
-        var content = DownloadContent(MinimalEditorConfigUrl);
+        var content = await DownloadContent(MinimalEditorConfigUrl);
 
         await File.WriteAllTextAsync(EditorConfigPath, content);
         EditorConfigTempApplied = true;
     }
 
-    private static string DownloadContent(string url)
+    private static async Task<string> DownloadContent(string url)
     {
-        var content = RunCurlCommand($"-fsSL \"{url}\"");
+        var content = await RunCurlCommand($"-fsSL \"{url}\"");
+
         return content;
     }
 
@@ -199,7 +207,7 @@ public class ReviewWorkflow
     private static async Task CollectChanges()
     {
         Console.WriteLine("Collecting file diffs for changed C# files");
-        var changedFiles = GetChangedFiles();
+        IReadOnlyList<string> changedFiles = await GetChangedFiles();
 
         foreach (var file in changedFiles)
         {
@@ -236,15 +244,15 @@ public class ReviewWorkflow
         RunGitCommand($"checkout -B {branchName} origin/{branchName}");
     }
 
-    private static string RunGitCommand(string arguments) => RunProcessCommand("git", arguments);
+    private static async Task<string> RunGitCommand(string arguments) => await RunProcessCommand("git", arguments);
 
-    private static string RunDotnetCommand(string command) => RunProcessCommand("dotnet", command);
+    private static async Task<string> RunDotnetCommand(string command) => await RunProcessCommand("dotnet", command);
 
-    private static string RunCopilotCommand(string command) => RunProcessCommand("copilot", command);
+    private static async Task<string> RunCopilotCommand(string command) => await RunProcessCommand("copilot", command);
 
-    private static string RunCurlCommand(string command) => RunProcessCommand("curl", command);
+    private static async Task<string> RunCurlCommand(string command) => await RunProcessCommand("curl", command);
 
-    private static void AuthenticateGitHub(string ghToken)
+    private static async Task AuthenticateGitHub(string ghToken)
     {
         Console.WriteLine("Authenticating GitHub CLI session");
 
@@ -255,10 +263,10 @@ public class ReviewWorkflow
 
         Console.WriteLine("Authenticating GitHub CLI session");
 
-        RunProcessCommand("gh", "auth login --with-token", ghToken);
+        await RunProcessCommand("gh", "auth login --with-token", ghToken);
     }
 
-    private static string RunProcessCommand(string fileName, string arguments, string input = "")
+    private static async Task<string> RunProcessCommand(string fileName, string arguments, string input = "", CancellationToken cancellationToken = default)
     {
         // Executes an external process and returns its output; trim behavior is configurable per caller.
         var process = new Process
@@ -285,10 +293,64 @@ public class ReviewWorkflow
             process.StandardInput.Close();
         }
 
-        var output = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
+        var stdoutBuffer = new StringBuilder();
+        var stderrBuffer = new StringBuilder();
 
-        return output.Trim();
+        Task stdoutTask = StreamLinesAsync(
+            process.StandardOutput,
+            line =>
+            {
+                Console.WriteLine(line);
+                stdoutBuffer.AppendLine(line);
+            },
+            cancellationToken);
+
+        Task stderrTask = StreamLinesAsync(
+            process.StandardError,
+            line =>
+            {
+                Console.Error.WriteLine(line);
+                stderrBuffer.AppendLine(line);
+            },
+            cancellationToken);
+
+        await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
+        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+        if (process.ExitCode != 0)
+        {
+            var errorText = stderrBuffer.ToString().Trim();
+
+            throw new InvalidOperationException(
+                $"Process '{fileName}' exited with code {process.ExitCode}. {errorText}".Trim());
+        }
+
+        var combinedOutput = stdoutBuffer.Length > 0
+                                 ? stdoutBuffer.ToString()
+                                 : stderrBuffer.ToString();
+
+        return combinedOutput.Trim();
+    }
+
+    static async Task StreamLinesAsync(
+        StreamReader reader,
+        Action<string> onLine,
+        CancellationToken cancellationToken)
+    {
+        // Reads lines until the stream ends; prints each line immediately.
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string? line = await reader.ReadLineAsync(cancellationToken);
+
+            if (line is null)
+            {
+                return;
+            }
+
+            onLine(line);
+        }
     }
 }
 
