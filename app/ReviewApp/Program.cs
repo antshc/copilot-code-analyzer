@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 
 public class ReviewWorkflow
@@ -33,10 +34,10 @@ public class ReviewWorkflow
 
         AuthenticateGitHub(appConfig.CopilotToken);
         RecreateDirectory(OutputDir);
-        CollectFileDiffs();
+        await CollectChanges();
 
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
-        string reviewPrompt = await DownloadContent(ReviewPromptUrl);
+        string reviewPrompt = DownloadContent(ReviewPromptUrl);
         RunReviewPrompt(reviewPrompt);
         CleanupChangeArtifacts();
         RestoreBranchState(appConfig.BranchName);
@@ -96,36 +97,11 @@ public class ReviewWorkflow
         Directory.CreateDirectory(targetDir);
     }
 
-    private static async Task<string> DownloadContent(string url)
-    {
-        using var client = CreateHttpClient();
-
-        return await client.GetStringAsync(url);
-    }
-
-    private static HttpClient CreateHttpClient()
-    {
-        var client = new HttpClient();
-
-        return client;
-    }
-
     private static async Task RunAnalyzerBuildForChanges()
     {
         Console.WriteLine("Running analyzer-enabled build for changes");
-        var files = RunGitCommand("diff --name-only HEAD");
-        var filePaths = files.Split('\n');
 
-        var changedFiles = filePaths
-            .Where(f => !string.IsNullOrWhiteSpace(f))
-            .Where(f => f.EndsWith(".cs")).ToArray();
-
-        if (!changedFiles.Any())
-        {
-            Console.WriteLine("No changed C# files detected; skipping analyzer run");
-
-            return;
-        }
+        IReadOnlyList<string> changedFiles = GetChangedFiles();
 
         await ApplyMinimalEditorConfig();
 
@@ -138,6 +114,25 @@ public class ReviewWorkflow
         }
 
         RestoreEditorConfigState();
+    }
+
+    private static IReadOnlyList<string> GetChangedFiles()
+    {
+        string files = RunGitCommand("diff --name-only HEAD");
+        string[] filePaths = files.Split('\n');
+
+        string[] changedFiles = filePaths
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Where(f => f.EndsWith(".cs")).ToArray();
+
+        if (!changedFiles.Any())
+        {
+            Console.WriteLine("No changed C# files detected; skipping analyzer run");
+
+            return [];
+        }
+
+        return changedFiles;
     }
 
     private static string FindProjectForFile(string sourceFile)
@@ -171,21 +166,16 @@ public class ReviewWorkflow
         }
 
         Console.WriteLine("Downloading minimal .editorconfig used solely for analyzer execution");
-        using var client = CreateHttpClient();
+        var content = DownloadContent(MinimalEditorConfigUrl);
 
-        try
-        {
-            var editorConfigContent = await client.GetStringAsync(MinimalEditorConfigUrl);
-            await File.WriteAllTextAsync(EditorConfigPath, editorConfigContent);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-
-            throw;
-        }
-
+        await File.WriteAllTextAsync(EditorConfigPath, content);
         EditorConfigTempApplied = true;
+    }
+
+    private static string DownloadContent(string url)
+    {
+        var content = RunCurlCommand($"-fsSL \"{url}\"");
+        return content;
     }
 
     private static void RestoreEditorConfigState()
@@ -206,27 +196,21 @@ public class ReviewWorkflow
         EditorConfigTempApplied = false;
     }
 
-    private static void AuthenticateGitHub(string ghToken)
-    {
-        Console.WriteLine("Authenticating GitHub CLI session");
-        RunDotnetCommand($"echo {ghToken} | gh auth login --with-token");
-    }
-
-    private static void CollectFileDiffs()
+    private static async Task CollectChanges()
     {
         Console.WriteLine("Collecting file diffs for changed C# files");
-        var files = RunDotnetCommand("git diff --name-only HEAD -- '*.cs'").Split('\n').Where(f => !string.IsNullOrWhiteSpace(f));
+        var changedFiles = GetChangedFiles();
 
-        foreach (var file in files)
+        foreach (var file in changedFiles)
         {
             string targetPath = Path.Combine(OutputDir, file);
             string targetDir = Path.GetDirectoryName(targetPath);
             Directory.CreateDirectory(targetDir);
 
-            File.WriteAllText(targetPath, $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n" +
-                                          RunDotnetCommand($"git show HEAD:{file}") +
-                                          "\n----- DIFF -----\n" +
-                                          RunDotnetCommand($"git diff HEAD -- {file}"));
+            await File.WriteAllTextAsync(targetPath, $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n" +
+                                                     RunGitCommand($"show HEAD:{file}") +
+                                                     "\n----- DIFF -----\n" +
+                                                     RunGitCommand($"diff HEAD -- {file}"));
         }
     }
 
@@ -252,13 +236,29 @@ public class ReviewWorkflow
         RunGitCommand($"checkout -B {branchName} origin/{branchName}");
     }
 
-    private static string RunGitCommand(string arguments) => RunProcessCommand("git", arguments, true);
+    private static string RunGitCommand(string arguments) => RunProcessCommand("git", arguments);
 
-    private static string RunDotnetCommand(string command) => RunProcessCommand("dotnet", command, false);
+    private static string RunDotnetCommand(string command) => RunProcessCommand("dotnet", command);
 
-    private static string RunCopilotCommand(string command) => RunProcessCommand("copilot", command, false);
+    private static string RunCopilotCommand(string command) => RunProcessCommand("copilot", command);
 
-    private static string RunProcessCommand(string fileName, string arguments, bool trimOutput)
+    private static string RunCurlCommand(string command) => RunProcessCommand("curl", command);
+
+    private static void AuthenticateGitHub(string ghToken)
+    {
+        Console.WriteLine("Authenticating GitHub CLI session");
+
+        if (string.IsNullOrWhiteSpace(ghToken))
+        {
+            throw new ArgumentException("GitHub token must be provided.", nameof(ghToken));
+        }
+
+        Console.WriteLine("Authenticating GitHub CLI session");
+
+        RunProcessCommand("gh", "auth login --with-token", ghToken);
+    }
+
+    private static string RunProcessCommand(string fileName, string arguments, string input = "")
     {
         // Executes an external process and returns its output; trim behavior is configurable per caller.
         var process = new Process
@@ -267,19 +267,29 @@ public class ReviewWorkflow
             {
                 FileName = fileName,
                 Arguments = arguments,
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
             }
         };
 
         process.Start();
+
+        if (!string.IsNullOrWhiteSpace(input))
+        {
+            process.StandardInput.WriteLine(input);
+            process.StandardInput.Close();
+        }
+
         var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
-        return trimOutput ? output.Trim() : output;
+        return output.Trim();
     }
-    
 }
 
 public record AppConfig(
