@@ -12,8 +12,17 @@ indent_size = 2
 [*.cs]
 indent_size = 4
 
-dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Design.severity = warning
+dotnet_analyzer_diagnostic.category-Documentation.severity = none
+dotnet_analyzer_diagnostic.category-Globalization.severity = warning
+dotnet_analyzer_diagnostic.category-Interoperability.severity = warning
+dotnet_analyzer_diagnostic.category-Maintainability.severity = warning
 dotnet_analyzer_diagnostic.category-Naming.severity = warning
+dotnet_analyzer_diagnostic.category-Performance.severity = warning
+dotnet_analyzer_diagnostic.category-Reliability.severity = warning
+dotnet_analyzer_diagnostic.category-Security.severity = warning
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Usage.severity = warning
 
 ###############################
 # Naming Conventions          #
@@ -81,7 +90,7 @@ dotnet_naming_style.camel_case_style.capitalization = camel_case
 dotnet_diagnostic.IDE0160.severity = warning
 
 # Convert to top-level statements https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/IDE0210
-dotnet_diagnostic.IDE0160.severity = none
+dotnet_diagnostic.IDE0210.severity = none
 
 # Remove unnecessary using directives
 dotnet_diagnostic.IDE0005.severity = warning
@@ -98,9 +107,24 @@ dotnet_diagnostic.IDE0290.severity = none
 # Collection initialization can be simplified (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0028)
 dotnet_diagnostic.IDE0028.severity = none
 
+# CA1510: Use Exception Throw Helpers. Release: 8.0. Category: Maintainability. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1510
+dotnet_diagnostic.CA1510.severity = warning
+
 # Compiler Warning (level 4) 
 # https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/cs1591
 dotnet_diagnostic.CS1591.severity = none
+
+# CA1001: Types that Own Disposable Fields Should be Disposable. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1001
+dotnet_diagnostic.CA1001.severity = warning
+
+# CA1002: Do not Expose Generic Lists. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1002
+dotnet_diagnostic.CA1002.severity = warning
+
+# CA1008: Enums Should Have Zero Value. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1008
+dotnet_diagnostic.CA1008.severity = warning
+
+# CA1012: Abstract Types Should Not Have Constructors. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1012
+dotnet_diagnostic.CA1012.severity = warning
 
 # CA1021: Avoid Out Parameters. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1021
 dotnet_diagnostic.CA1021.severity = none
