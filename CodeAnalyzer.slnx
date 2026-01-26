@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/CodeSmells/">
+    <Project Path="codesmells/CodeSmellApp/CodeSmellApp.csproj" />
+    <Project Path="codesmells/CodeSmellApp2/CodeSmellApp2.csproj" />
+  </Folder>
+  <Project Path="app/ReviewApp/ReviewApp.csproj" />
+</Solution>
