@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 public class ReviewWorkflow
@@ -18,7 +19,7 @@ public class ReviewWorkflow
 
         Console.WriteLine("Starting automated review workflow");
 
-        PrepareBranchState(appConfig.BaseBranchName, appConfig.BranchName);
+        // PrepareBranchState(appConfig.BaseBranchName, appConfig.BranchName);
         RecreateDirectory(ReportOut);
 
         if (appConfig.AnalyzersEnabled)
@@ -34,7 +35,8 @@ public class ReviewWorkflow
         RecreateDirectory(OutputDir);
         CollectFileDiffs();
 
-        string reviewPrompt = await DownloadPrompt(ReviewPromptUrl);
+        Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
+        string reviewPrompt = await DownloadContent(ReviewPromptUrl);
         RunReviewPrompt(reviewPrompt);
         CleanupChangeArtifacts();
         RestoreBranchState(appConfig.BranchName);
@@ -49,7 +51,10 @@ public class ReviewWorkflow
         if (File.Exists(jsonPath))
         {
             string json = await File.ReadAllTextAsync(jsonPath);
-            var appConfig = JsonSerializer.Deserialize<AppConfig>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            var appConfig = JsonSerializer.Deserialize<AppConfig>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
             return appConfig;
         }
@@ -69,33 +74,14 @@ public class ReviewWorkflow
         return new AppConfig(ghToken, baseBranchName, branchName, analyzersEnabled);
     }
 
-    private static string GetRepoRoot()
-    {
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "git",
-                Arguments = "rev-parse --show-toplevel",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        process.Start();
-        string output = process.StandardOutput.ReadToEnd().Trim();
-        process.WaitForExit();
-
-        return output;
-    }
+    private static string GetRepoRoot() => RunGitCommand("rev-parse --show-toplevel");
 
     private static void PrepareBranchState(string baseBranchName, string branchName)
     {
         Console.WriteLine($"Preparing branch state using base '{baseBranchName}' against '{branchName}'");
-        RunCommand("git fetch");
-        RunCommand($"git checkout origin/{branchName}");
-        RunCommand($"git reset --soft $(git merge-base HEAD origin/{baseBranchName})");
+        RunGitCommand("fetch");
+        RunGitCommand($"checkout origin/{branchName}");
+        RunGitCommand($"reset --soft $(git merge-base HEAD origin/{baseBranchName})");
     }
 
     private static void RecreateDirectory(string targetDir)
@@ -110,18 +96,29 @@ public class ReviewWorkflow
         Directory.CreateDirectory(targetDir);
     }
 
-    private static async Task<string> DownloadPrompt(string url)
+    private static async Task<string> DownloadContent(string url)
     {
-        Console.WriteLine($"Downloading prompt from {url}");
-        using var client = new HttpClient();
+        using var client = CreateHttpClient();
 
         return await client.GetStringAsync(url);
+    }
+
+    private static HttpClient CreateHttpClient()
+    {
+        var client = new HttpClient();
+
+        return client;
     }
 
     private static async Task RunAnalyzerBuildForChanges()
     {
         Console.WriteLine("Running analyzer-enabled build for changes");
-        var changedFiles = RunCommand("git diff --name-only HEAD -- '*.cs'").Split('\n').Where(f => !string.IsNullOrWhiteSpace(f)).ToArray();
+        var files = RunGitCommand("diff --name-only HEAD");
+        var filePaths = files.Split('\n');
+
+        var changedFiles = filePaths
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Where(f => f.EndsWith(".cs")).ToArray();
 
         if (!changedFiles.Any())
         {
@@ -130,15 +127,14 @@ public class ReviewWorkflow
             return;
         }
 
-        ApplyMinimalEditorConfig();
-        await Task.Delay(2000);
+        await ApplyMinimalEditorConfig();
 
         foreach (var projectPath in changedFiles.Select(FindProjectForFile).Distinct())
         {
             Console.WriteLine($"Running analyzer-enabled build for {projectPath}");
 
-            RunCommand(
-                $"dotnet build {projectPath} -p:EnableNETAnalyzers=true -p:AnalysisMode=Recommended -p:EnforceCodeStyleInBuild=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false -p:GenerateDocumentationFile=true");
+            RunDotnetCommand(
+                $"build {projectPath} -p:EnableNETAnalyzers=true -p:AnalysisMode=Recommended -p:EnforceCodeStyleInBuild=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false -p:GenerateDocumentationFile=true");
         }
 
         RestoreEditorConfigState();
@@ -150,7 +146,8 @@ public class ReviewWorkflow
 
         while (!string.IsNullOrEmpty(currentDir))
         {
-            var candidates = Directory.GetFiles(currentDir, "*.csproj");
+            var pathFromRoot = Path.Combine(RepoRoot, currentDir);
+            var candidates = Directory.GetFiles(pathFromRoot, "*.csproj");
 
             if (candidates.Any())
             {
@@ -163,7 +160,7 @@ public class ReviewWorkflow
         throw new FileNotFoundException($"No .csproj file found for {sourceFile}");
     }
 
-    private static void ApplyMinimalEditorConfig()
+    private static async Task ApplyMinimalEditorConfig()
     {
         if (EditorConfigTempApplied) return;
 
@@ -174,8 +171,19 @@ public class ReviewWorkflow
         }
 
         Console.WriteLine("Downloading minimal .editorconfig used solely for analyzer execution");
-        using var client = new HttpClient();
-        File.WriteAllText(EditorConfigPath, client.GetStringAsync(MinimalEditorConfigUrl).Result);
+        using var client = CreateHttpClient();
+
+        try
+        {
+            var editorConfigContent = await client.GetStringAsync(MinimalEditorConfigUrl);
+            await File.WriteAllTextAsync(EditorConfigPath, editorConfigContent);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+
+            throw;
+        }
 
         EditorConfigTempApplied = true;
     }
@@ -201,13 +209,13 @@ public class ReviewWorkflow
     private static void AuthenticateGitHub(string ghToken)
     {
         Console.WriteLine("Authenticating GitHub CLI session");
-        RunCommand($"echo {ghToken} | gh auth login --with-token");
+        RunDotnetCommand($"echo {ghToken} | gh auth login --with-token");
     }
 
     private static void CollectFileDiffs()
     {
         Console.WriteLine("Collecting file diffs for changed C# files");
-        var files = RunCommand("git diff --name-only HEAD -- '*.cs'").Split('\n').Where(f => !string.IsNullOrWhiteSpace(f));
+        var files = RunDotnetCommand("git diff --name-only HEAD -- '*.cs'").Split('\n').Where(f => !string.IsNullOrWhiteSpace(f));
 
         foreach (var file in files)
         {
@@ -216,16 +224,16 @@ public class ReviewWorkflow
             Directory.CreateDirectory(targetDir);
 
             File.WriteAllText(targetPath, $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n" +
-                                          RunCommand($"git show HEAD:{file}") +
+                                          RunDotnetCommand($"git show HEAD:{file}") +
                                           "\n----- DIFF -----\n" +
-                                          RunCommand($"git diff HEAD -- {file}"));
+                                          RunDotnetCommand($"git diff HEAD -- {file}"));
         }
     }
 
     private static void RunReviewPrompt(string reviewPrompt)
     {
         Console.WriteLine("Running Copilot review prompt on collected diffs");
-        RunCommand($"copilot -p \"{reviewPrompt} @{OutputDir}. save results to {ReportOut}/review-report.md\" --yolo --model gpt-5.2");
+        RunCopilotCommand($"-p \"{reviewPrompt} @{OutputDir}. save results to {ReportOut}/review-report.md\" --yolo --model gpt-5.2");
     }
 
     private static void CleanupChangeArtifacts()
@@ -241,30 +249,37 @@ public class ReviewWorkflow
     private static void RestoreBranchState(string branchName)
     {
         Console.WriteLine($"Restoring branch state for {branchName}");
-        RunCommand($"git checkout -B {branchName} origin/{branchName}");
+        RunGitCommand($"checkout -B {branchName} origin/{branchName}");
     }
 
-    private static string RunCommand(string command)
+    private static string RunGitCommand(string arguments) => RunProcessCommand("git", arguments, true);
+
+    private static string RunDotnetCommand(string command) => RunProcessCommand("dotnet", command, false);
+
+    private static string RunCopilotCommand(string command) => RunProcessCommand("copilot", command, false);
+
+    private static string RunProcessCommand(string fileName, string arguments, bool trimOutput)
     {
+        // Executes an external process and returns its output; trim behavior is configurable per caller.
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
-                Arguments = $"/C {command}",
+                FileName = fileName,
+                Arguments = arguments,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             }
         };
 
         process.Start();
-        string output = process.StandardOutput.ReadToEnd();
+        var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
-        return output;
+        return trimOutput ? output.Trim() : output;
     }
+    
 }
 
 public record AppConfig(
