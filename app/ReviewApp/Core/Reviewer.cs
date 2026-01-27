@@ -90,7 +90,7 @@ internal class Reviewer
     {
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
         string reviewPrompt = await downloader.DownloadStringAsync(ReviewPromptUrl, cancellationToken);
-        var prompt = $"{reviewPrompt} @{outputDir}. Do not search files outside directory. Save results to {reportOut}";
+        var prompt = $"{reviewPrompt} @{outputDir}. Do not search files outside the specified directory. Do not build or restore the project. Save results to {reportOut}";
         await copilotCli.RunReviewAsync(prompt, appConfig.CopilotToken, cancellationToken);
     }
 
