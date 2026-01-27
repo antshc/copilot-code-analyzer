@@ -21,10 +21,11 @@ class Program
         var copilot = CreateCopilotClient(currentDirectory);
         var appConfig = await GetAppConfig(currentDirectory, cancellationToken);
 
-        // 
-        await copilot.RunReviewAsync($"What files do you see in the @Changes. save results to {ReportOut}", appConfig.CopilotToken, cancellationToken);
-        
+        // await copilot.RunReviewAsync($"What files do you see in the @Changes. save results to {ReportOut}", appConfig.CopilotToken, cancellationToken);
+        // await copilot.RunReviewAsync("Review ONLY the files changed in the current branch compared.", appConfig.CopilotToken, cancellationToken);
+
         // copilot -p "What files do you see in the @." --model gpt-5.2 --allow-all-tools
+        // copilot -p "Use git diff --name-only HEAD and display all changed files" --model gpt-5.2 --allow-tool "shell(git diff)"
 
         Console.WriteLine("Review completed");
     }
@@ -42,7 +43,7 @@ class Program
 
     private static CopilotClient CreateCopilotClient(string currentDirectory)
     {
-        var processRunner = new ProcessRunner(currentDirectory);
+        var processRunner = new ProcessRunner("C:\\_projects\\copilot-code-analyzer");
         var copilot = new CopilotClient(processRunner);
 
         return copilot;

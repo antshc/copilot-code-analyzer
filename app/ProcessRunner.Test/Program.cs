@@ -9,6 +9,7 @@ class Program
         var currentDirectory = Directory.GetCurrentDirectory();
         var processRunner = new ProcessRunner(currentDirectory);
         await processRunner.RunAsync("pwsh.exe", "-c \"Get-ChildItem -File\"");
+        await processRunner.RunAsync("pwsh.exe", "-c \"git --version\"");
         Console.WriteLine("Hello, World!");
     }
 }

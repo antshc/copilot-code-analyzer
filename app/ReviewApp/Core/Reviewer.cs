@@ -19,14 +19,14 @@ internal class Reviewer
     private readonly OutputArtifacts _artifacts;
 
     public Reviewer(
-        IGitClient gitCli, 
+        IGitClient gitCli,
         ICopilotClient copilotCli,
         IAnalyzerRunner analyzerRunner,
-        IBranchState branchState, 
-        AppConfig appConfig, 
-        IChangeDetector changesDetector, 
+        IBranchState branchState,
+        AppConfig appConfig,
+        IChangeDetector changesDetector,
         IDiffCollector diffCollector,
-        IFileSystemService fileSystem, 
+        IFileSystemService fileSystem,
         IContentDownloader downloader,
         OutputArtifacts artifacts)
     {
@@ -45,7 +45,6 @@ internal class Reviewer
     public async Task PerformReviewAsync(CancellationToken cancellationToken = default)
     {
         CleanupReport(_fileSystem, _artifacts.ReportOut);
-
 
         await CheckoutReviewBranch(_branchState, _appConfig, cancellationToken);
         IReadOnlyList<string> changedFiles = await ReadChangedFiles(_changesDetector, cancellationToken);
@@ -86,7 +85,8 @@ internal class Reviewer
     private static async Task PrepareReviewChanges(IDiffCollector diffCollector, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken) =>
         await diffCollector.CollectAsync(changedFiles, cancellationToken);
 
-    private static async Task PerformChangesReview(string outputDir, string reportOut, IContentDownloader downloader, ICopilotClient copilotCli, AppConfig appConfig, CancellationToken cancellationToken)
+    private static async Task PerformChangesReview(string outputDir, string reportOut, IContentDownloader downloader, ICopilotClient copilotCli, AppConfig appConfig,
+        CancellationToken cancellationToken)
     {
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
         string reviewPrompt = await downloader.DownloadStringAsync(ReviewPromptUrl, cancellationToken);
