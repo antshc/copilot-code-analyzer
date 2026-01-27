@@ -16,7 +16,7 @@ public static class AppConfigLoader
             return await ConfigReader.Read(jsonPath, cancellationToken);
         }
 
-        if (args.Length < 4)
+        if (args.Length < 3)
         {
             throw new ArgumentException("Usage: ReviewWorkflow <GH_TOKEN> <BASE_BRANCH_NAME> <BRANCH_NAME> [-format enable|disable]");
         }
