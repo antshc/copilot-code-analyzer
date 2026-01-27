@@ -40,10 +40,12 @@ public class Program
             artifacts.EditorConfigPath,
             artifacts.EditorConfigBackupPath);
 
+        var analyzerRunner = new AnalyzerRunner(dotnetCli, editorConfigManager, fileSystem, projectLocator, artifacts.ReportOut);
+
         return new Reviewer(
             gitClient,
             copilotCli,
-            new AnalyzerRunner(dotnetCli, editorConfigManager, fileSystem, projectLocator, artifacts.ReportOut),
+            analyzerRunner,
             branchState,
             appConfig,
             changesDetector,
