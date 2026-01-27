@@ -20,7 +20,7 @@ public class ChangeDetector : IChangeDetector
 
         var changed = filePaths
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            .Select(f=> Path.GetFileNameWithoutExtension(f)!)
+            .Select(f=> Path.GetFileName(f)!)
             .Where(f => !ExcludeFileNames.Contains(f))
             .ToArray();
 
