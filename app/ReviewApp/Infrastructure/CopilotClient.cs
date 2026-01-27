@@ -11,7 +11,7 @@ public class CopilotClient : ICopilotClient
     // Runs Copilot CLI against collected diffs and saves the review output.
     public async Task RunReviewAsync(string promptContent, string token, CancellationToken cancellationToken)
     {
-        var promptArgument = $"-p \"{promptContent}\" --model gpt-5.2 --allow-all-tools";
+        var promptArgument = $"-p \"{promptContent}\" --model gpt-5.2 --allow-all-tools --deny-tool 'github-mcp-server' --deny-tool 'dotnet'";
         var environment = new Dictionary<string, string?> { { "GH_TOKEN", token } };
         var result = await _processRunner.RunAsync("copilot", promptArgument, environment, cancellationToken: cancellationToken);
 

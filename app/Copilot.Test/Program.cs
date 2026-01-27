@@ -24,7 +24,7 @@ class Program
         // await copilot.RunReviewAsync($"What files do you see in the @Changes. save results to {ReportOut}", appConfig.CopilotToken, cancellationToken);
         // await copilot.RunReviewAsync("Review ONLY the files changed in the current branch compared.", appConfig.CopilotToken, cancellationToken);
 
-        // copilot -p "What files do you see in the @." --model gpt-5.2 --allow-all-tools
+        // copilot -p "What files do you see in the @." --model gpt-5.2 --allow-all-tools --deny-tool 'github-mcp-server' --deny-tool 'dotnet'
         // copilot -p "Use git diff --name-only HEAD and display all changed files" --model gpt-5.2 --allow-tool "shell(git diff)"
 
         Console.WriteLine("Review completed");
