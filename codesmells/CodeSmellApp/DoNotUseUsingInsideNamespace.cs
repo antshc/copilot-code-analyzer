@@ -15,7 +15,7 @@ namespace CodeSmellApp
             LogAction($"Customer {name} added at {DateTime.UtcNow:o}");
         }
 
-        public string GenerateCsvReport()
+        public string GenerateCsvReport1()
         {
             return string.Join(',', m_customers);
         }
