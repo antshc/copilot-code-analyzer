@@ -25,7 +25,7 @@ public class ProjectLocator : IProjectLocator
             currentDir = Path.GetDirectoryName(currentDir);
         }
 
-        throw new FileNotFoundException($"No .csproj file found for {relativeSourceFile}");
+        throw new FileNotFoundException($"No .csproj file found for {relativeSourceFile}, in the absolutePath {absolutePath}");
     }
 }
 
