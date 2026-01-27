@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using ReviewApp.Infrastructure;
+﻿using ReviewApp.Infrastructure;
 
 namespace ReviewApp;
 
@@ -19,13 +18,13 @@ public static class AppConfigLoader
 
         if (args.Length < 4)
         {
-            throw new ArgumentException("Usage: ReviewWorkflow <GH_TOKEN> <BASE_BRANCH_NAME> <BRANCH_NAME> <SOLUTION_PATH> [-format enable|disable]");
+            throw new ArgumentException("Usage: ReviewWorkflow <GH_TOKEN> <BASE_BRANCH_NAME> <BRANCH_NAME> [-format enable|disable]");
         }
 
         var ghToken = args[0];
         var baseBranchName = args[1];
         var branchName = args[2];
-        var formatPromptToggle = args.Length > 5 && args[4] == "-format" ? args[5] : "disable";
+        var formatPromptToggle = args.Length > 5 && args[4] == "-format" ? args[5] : "enable";
         var analyzersEnabled = formatPromptToggle == "enable";
 
         return new AppConfig(ghToken, baseBranchName, branchName, analyzersEnabled);

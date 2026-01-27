@@ -2,7 +2,7 @@
 set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly REVIEW_SCRIPT="$SCRIPT_DIR/reviewv2.sh"
+readonly REVIEW_SCRIPT="$SCRIPT_DIR/artifactory/review.exe"
 
 if [[ -z "${GH_TOKEN:-}" ]]; then
   echo "GH_TOKEN environment variable must be set before running this wrapper." >&2
@@ -15,4 +15,4 @@ if [[ -z "$branchName" ]]; then
   exit 1
 fi
 
-"$REVIEW_SCRIPT" "$GH_TOKEN" "main" "$branchName" "./CodeSmellApp/CodeSmellApp.sln" -format enable
+"$REVIEW_SCRIPT" "$GH_TOKEN" "main" "$branchName"
