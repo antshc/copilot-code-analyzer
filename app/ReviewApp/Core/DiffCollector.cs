@@ -29,16 +29,25 @@ public class DiffCollector : IDiffCollector
                 Directory.CreateDirectory(targetDir);
             }
 
-            var original = await _gitClient.ShowFileFromHeadAsync(file, cancellationToken).ConfigureAwait(false);
-            var diff = await _gitClient.DiffFileFromHeadAsync(file, cancellationToken).ConfigureAwait(false);
+            string content = "";
 
-            var content = $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n{original}\n----- DIFF -----\n{diff}";
+            try
+            {
+                var original = await _gitClient.ShowFileFromHeadAsync(file, cancellationToken).ConfigureAwait(false);
+                var diff = await _gitClient.DiffFileFromHeadAsync(file, cancellationToken).ConfigureAwait(false);
+
+                content = $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n{original}\n----- DIFF -----\n{diff}";
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("exists on disk, but not in 'HEAD'", StringComparison.OrdinalIgnoreCase) ||
+                                                       ex.Message.Contains("Path", StringComparison.OrdinalIgnoreCase) &&
+                                                       ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("$New file {file}");
+                var current = await _fileSystemService.ReadFileAsync(file, cancellationToken).ConfigureAwait(false);
+                content = $"FILE: {file}\n\n----- ORIGINAL (HEAD) -----\n<file does not exist in HEAD>\n----- CURRENT CONTENT -----\n{current}";
+            }
+
             await _fileSystemService.WriteFileAsync(targetPath, content, cancellationToken).ConfigureAwait(false);
         }
     }
-}
-
-public interface IDiffCollector
-{
-    Task CollectAsync(IReadOnlyList<string> changedFiles, CancellationToken cancellationToken = default);
 }

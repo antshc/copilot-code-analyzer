@@ -53,4 +53,6 @@ public class FileSystemService : IFileSystemService
             File.Delete(path);
         }
     }
+
+    public async Task<string> ReadFileAsync(string file, CancellationToken cancellationToken) => await File.ReadAllTextAsync(file, cancellationToken);
 }

@@ -71,6 +71,7 @@ git fetch
 git checkout "origin/codesmell"
 git merge-base HEAD origin/main
 git reset --soft commit_hash_here
+git reset --soft $(git merge-base HEAD origin/main)
 
 OUTPUT_DIR="tests_results/_changes"
 
