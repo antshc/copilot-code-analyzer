@@ -4,11 +4,7 @@ namespace ReviewApp.Core;
 
 public class ChangeDetector : IChangeDetector
 {
-    private readonly HashSet<string> ExcludeFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "Program.cs",
-        "Reviewer.cs"
-    };
+    private readonly HashSet<string> ExcludeFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Program.cs", "Reviewer.cs" };
     private readonly IGitClient _gitClient;
 
     public ChangeDetector(IGitClient gitClient) => _gitClient = gitClient;
@@ -20,8 +16,7 @@ public class ChangeDetector : IChangeDetector
 
         var changed = filePaths
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            .Select(f=> Path.GetFileName(f)!)
-            .Where(f => !ExcludeFileNames.Contains(f))
+            .Where(f => !ExcludeFileNames.Contains(Path.GetFileName(f)))
             .ToArray();
 
         if (!changed.Any())
