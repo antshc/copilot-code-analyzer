@@ -19,4 +19,6 @@ public interface IFileSystemService
 
     // Deletes a file if it exists.
     void DeleteFile(string path);
+
+    Task<string> ReadFileAsync(string file, CancellationToken cancellationToken);
 }
