@@ -9,11 +9,11 @@ public class CopilotClient : ICopilotClient
     public CopilotClient(IProcessRunner processRunner) => _processRunner = processRunner;
 
     // Runs Copilot CLI against collected diffs and saves the review output.
-    public async Task RunReviewAsync(string promptContent, string changesPath, string reportOutputPath, string token, CancellationToken cancellationToken = default)
+    public async Task RunReviewAsync(string promptContent, string token, CancellationToken cancellationToken)
     {
-        var promptArgument = $"-p \"{promptContent} @{changesPath}. save results to {reportOutputPath}\" --yolo --model gpt-5.2";
+        var promptArgument = $"-p \"{promptContent}\" --model gpt-5.2 --allow-all-tools";
         var environment = new Dictionary<string, string?> { { "GH_TOKEN", token } };
-        var result = await _processRunner.RunAsync("copilot", promptArgument, environment, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var result = await _processRunner.RunAsync("copilot", promptArgument, environment, cancellationToken: cancellationToken);
 
         if (!result.IsSuccess)
         {

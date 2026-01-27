@@ -3,6 +3,8 @@
 winget install -e --id cURL.cURL
 winget install GitHub.Copilot
 winget install -e --id Git.Git
+winget install --id Microsoft.PowerShell --source winget
+
 ```
 
 ## Create patch

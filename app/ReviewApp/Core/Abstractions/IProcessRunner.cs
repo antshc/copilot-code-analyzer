@@ -4,6 +4,8 @@ namespace ReviewApp.Core.Abstractions;
 
 public interface IProcessRunner
 {
+    string WorkingDirectory { get; }
+
     // Runs a process with optional environment variables and returns captured output.
     Task<CommandResult> RunAsync(
         string fileName,

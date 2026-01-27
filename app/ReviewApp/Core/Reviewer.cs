@@ -90,7 +90,8 @@ internal class Reviewer
     {
         Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
         string reviewPrompt = await downloader.DownloadStringAsync(ReviewPromptUrl, cancellationToken);
-        await copilotCli.RunReviewAsync(reviewPrompt, outputDir, reportOut, appConfig.CopilotToken, cancellationToken);
+        var prompt = $"{reviewPrompt} @{outputDir}. save results to {reportOut}";
+        await copilotCli.RunReviewAsync(prompt, appConfig.CopilotToken, cancellationToken);
     }
 
     private static void CleanupChanges(IFileSystemService fileSystem, string outputDir) => fileSystem.RecreateDirectory(outputDir);

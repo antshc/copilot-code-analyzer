@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using ReviewApp.Infrastructure;
 
 namespace ReviewApp;
 
@@ -13,7 +14,7 @@ public static class AppConfigLoader
 
         if (File.Exists(jsonPath))
         {
-            return await ReadAppConfig(jsonPath, cancellationToken);
+            return await ConfigReader.Read(jsonPath, cancellationToken);
         }
 
         if (args.Length < 4)
@@ -28,20 +29,5 @@ public static class AppConfigLoader
         var analyzersEnabled = formatPromptToggle == "enable";
 
         return new AppConfig(ghToken, baseBranchName, branchName, analyzersEnabled);
-    }
-
-    private static async Task<AppConfig> ReadAppConfig(string jsonPath, CancellationToken cancellationToken)
-    {
-        var json = await File.ReadAllTextAsync(jsonPath, cancellationToken);
-        var appConfig = JsonSerializer.Deserialize<AppConfig>(
-            json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-        if (appConfig is null)
-        {
-            throw new InvalidOperationException("Failed to deserialize app configuration from appsettings.local.json");
-        }
-
-        return appConfig;
     }
 }

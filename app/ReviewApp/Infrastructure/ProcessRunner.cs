@@ -11,11 +11,15 @@ public class ProcessRunner : IProcessRunner
 
     public ProcessRunner(string workingDirectory = "", IProcessOutputSink? defaultSink = null)
     {
-        _workingDirectory = workingDirectory;
+        _workingDirectory = string.IsNullOrWhiteSpace(workingDirectory)
+                                ? Environment.CurrentDirectory
+                                : workingDirectory;
+
         _defaultSink = defaultSink ?? new ConsoleProcessOutputSink();
     }
 
-    // Executes an external process and streams output through the configured sink.
+    public string WorkingDirectory => _workingDirectory;
+
     public async Task<CommandResult> RunAsync(
         string fileName,
         string arguments,
@@ -35,12 +39,9 @@ public class ProcessRunner : IProcessRunner
             UseShellExecute = false,
             CreateNoWindow = true,
             StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8
+            StandardErrorEncoding = Encoding.UTF8,
+            WorkingDirectory = _workingDirectory
         };
-        
-        startInfo.WorkingDirectory = string.IsNullOrWhiteSpace(_workingDirectory)
-            ? Environment.CurrentDirectory
-            : _workingDirectory;
 
         if (environmentVariables is not null)
         {

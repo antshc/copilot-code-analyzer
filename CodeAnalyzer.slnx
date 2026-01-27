@@ -3,5 +3,9 @@
     <Project Path="codesmells/CodeSmellApp/CodeSmellApp.csproj" />
     <Project Path="codesmells/CodeSmellApp2/CodeSmellApp2.csproj" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="app/Copilot.Test/Copilot.Test.csproj" />
+    <Project Path="app/ProcessRunner.Test/ProcessRunner.Test.csproj" />
+  </Folder>
   <Project Path="app/ReviewApp/ReviewApp.csproj" />
 </Solution>
