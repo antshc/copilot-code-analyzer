@@ -7,13 +7,13 @@ public static class AppConfigLoader
     private const string LocalConfigFileName = "appsettings.local.json";
 
     // Loads configuration from appsettings.local.json when present, otherwise from command-line arguments.
-    public static async Task<AppConfig> LoadAsync(string[] args, CancellationToken cancellationToken = default)
+    public static async Task<AppConfig> LoadAsync(string[] args, CancellationToken cancellationToken)
     {
         var jsonPath = Path.Combine(Directory.GetCurrentDirectory(), LocalConfigFileName);
 
         if (File.Exists(jsonPath))
         {
-            return await ReadAppConfig(cancellationToken, jsonPath);
+            return await ReadAppConfig(jsonPath, cancellationToken);
         }
 
         if (args.Length < 4)
@@ -30,9 +30,9 @@ public static class AppConfigLoader
         return new AppConfig(ghToken, baseBranchName, branchName, analyzersEnabled);
     }
 
-    private static async Task<AppConfig> ReadAppConfig(CancellationToken cancellationToken, string jsonPath)
+    private static async Task<AppConfig> ReadAppConfig(string jsonPath, CancellationToken cancellationToken)
     {
-        var json = await File.ReadAllTextAsync(jsonPath, cancellationToken).ConfigureAwait(false);
+        var json = await File.ReadAllTextAsync(jsonPath, cancellationToken);
         var appConfig = JsonSerializer.Deserialize<AppConfig>(
             json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
