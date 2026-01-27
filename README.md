@@ -68,8 +68,9 @@ if [[ -z "$BRANCH_NAME" ]]; then
 fi
 
 git fetch
-git checkout "origin/$BRANCH_NAME"
-git reset --soft $(git merge-base HEAD origin/main)
+git checkout "origin/codesmell"
+git merge-base HEAD origin/main
+git reset --soft commit_hash_here
 
 OUTPUT_DIR="tests_results/_changes"
 
