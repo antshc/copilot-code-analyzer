@@ -30,7 +30,7 @@ public class GitClient : IGitClient
 
     // Gets changed file paths relative to HEAD.
     public Task<string> DiffNameOnlyFromHeadAsync(CancellationToken cancellationToken = default) =>
-        RunGitCaptureAsync("diff --no-pager --name-only HEAD", cancellationToken);
+        RunGitCaptureAsync(" --no-pager diff --name-only HEAD", cancellationToken);
 
     // Gets file content at HEAD.
     public Task<string> ShowFileFromHeadAsync(string relativePath, CancellationToken cancellationToken = default) =>
@@ -38,7 +38,7 @@ public class GitClient : IGitClient
 
     // Gets per-file diff relative to HEAD.
     public Task<string> DiffFileFromHeadAsync(string relativePath, CancellationToken cancellationToken = default) =>
-        RunGitCaptureAsync($"diff --no-pager HEAD -- {relativePath}", cancellationToken);
+        RunGitCaptureAsync($"--no-pager diff HEAD -- {relativePath}", cancellationToken);
 
     // Resets local branch to match remote state.
     public Task CheckoutBranchResetAsync(string branchName, CancellationToken cancellationToken = default) =>
