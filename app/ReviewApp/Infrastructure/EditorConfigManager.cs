@@ -1,26 +1,25 @@
 ﻿namespace ReviewApp.Infrastructure;
 
-public class EditorConfigManager
+public class EditorConfigManager : IEditorConfigManager
 {
+    private static readonly string MinimalEditorConfigUrl = "https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/rules/minimal.editorconfig";
+
     private readonly IFileSystemService fileSystemService;
     private readonly IContentDownloader downloader;
     private readonly string editorConfigPath;
     private readonly string backupPath;
-    private readonly string minimalConfigUrl;
     private bool isApplied;
 
     public EditorConfigManager(
         IFileSystemService fileSystemService,
         IContentDownloader downloader,
         string editorConfigPath,
-        string backupPath,
-        string minimalConfigUrl)
+        string backupPath)
     {
         this.fileSystemService = fileSystemService;
         this.downloader = downloader;
         this.editorConfigPath = editorConfigPath;
         this.backupPath = backupPath;
-        this.minimalConfigUrl = minimalConfigUrl;
     }
 
     // Applies the minimal .editorconfig, backing up any existing configuration.
@@ -36,7 +35,7 @@ public class EditorConfigManager
             fileSystemService.CopyFile(editorConfigPath, backupPath);
         }
 
-        var content = await downloader.DownloadStringAsync(minimalConfigUrl, cancellationToken).ConfigureAwait(false);
+        var content = await downloader.DownloadStringAsync(MinimalEditorConfigUrl, cancellationToken).ConfigureAwait(false);
         await fileSystemService.WriteFileAsync(editorConfigPath, content, cancellationToken).ConfigureAwait(false);
         isApplied = true;
     }
@@ -60,4 +59,10 @@ public class EditorConfigManager
 
         isApplied = false;
     }
+}
+
+public interface IEditorConfigManager
+{
+    Task ApplyMinimalConfigAsync(CancellationToken cancellationToken = default);
+    void RestoreOriginal();
 }

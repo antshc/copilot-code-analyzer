@@ -1,6 +1,4 @@
-﻿using System.Net.Http;
-
-namespace ReviewApp.Infrastructure;
+﻿namespace ReviewApp.Infrastructure;
 
 public interface IContentDownloader
 {

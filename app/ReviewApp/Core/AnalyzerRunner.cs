@@ -2,7 +2,7 @@
 
 namespace ReviewApp.Core;
 
-public class AnalyzerRunner
+public class AnalyzerRunner : IAnalyzerRunner
 {
     private readonly IDotnetCli dotnetCli;
     private readonly EditorConfigManager editorConfigManager;
@@ -88,4 +88,9 @@ public class AnalyzerRunner
 
         return projectToFiles;
     }
+}
+
+public interface IAnalyzerRunner
+{
+    Task RunAsync(IReadOnlyList<string> changedFiles, CancellationToken cancellationToken = default);
 }

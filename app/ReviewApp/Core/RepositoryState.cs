@@ -2,7 +2,7 @@
 
 namespace ReviewApp.Core;
 
-internal class BranchState
+internal class BranchState : IBranchState
 {
     private readonly IGitClient _gitClient;
 
@@ -17,4 +17,9 @@ internal class BranchState
         var commit = await _gitClient.FindMergeBaseAsync("HEAD", $"origin/{baseBranchName}", cancellationToken);
         await _gitClient.ResetSoftAsync(commit, cancellationToken);
     }
+}
+
+internal interface IBranchState
+{
+    Task SetReviewBranch(string baseBranchName, string branchName, CancellationToken cancellationToken);
 }

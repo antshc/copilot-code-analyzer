@@ -2,7 +2,7 @@
 
 namespace ReviewApp.Core;
 
-public class DiffCollector
+public class DiffCollector : IDiffCollector
 {
     private readonly IGitClient _gitClient;
     private readonly IFileSystemService _fileSystemService;
@@ -35,4 +35,9 @@ public class DiffCollector
             await _fileSystemService.WriteFileAsync(targetPath, content, cancellationToken).ConfigureAwait(false);
         }
     }
+}
+
+public interface IDiffCollector
+{
+    Task CollectAsync(IReadOnlyList<string> changedFiles, CancellationToken cancellationToken = default);
 }

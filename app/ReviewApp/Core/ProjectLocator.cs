@@ -1,6 +1,6 @@
 ﻿namespace ReviewApp.Core;
 
-public class ProjectLocator
+public class ProjectLocator : IProjectLocator
 {
     private readonly string _repoRoot;
 
@@ -27,4 +27,9 @@ public class ProjectLocator
 
         throw new FileNotFoundException($"No .csproj file found for {relativeSourceFile}");
     }
+}
+
+public interface IProjectLocator
+{
+    string FindProjectForFile(string relativeSourceFile);
 }

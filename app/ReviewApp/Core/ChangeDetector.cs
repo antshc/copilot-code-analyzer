@@ -2,17 +2,17 @@
 
 namespace ReviewApp.Core;
 
-public class ChangeDetector
+public class ChangeDetector : IChangeDetector
 {
-    private readonly IGitClient gitClient;
+    private readonly IGitClient _gitClient;
 
-    public ChangeDetector(IGitClient gitClient) => this.gitClient = gitClient;
+    public ChangeDetector(IGitClient gitClient) => _gitClient = gitClient;
 
-    // Returns changed C# files relative to HEAD, excluding Program.cs to avoid self-mutation loops.
-    public async Task<IReadOnlyList<string>> GetChangedCSharpFilesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetChangedCSharpFilesAsync(CancellationToken cancellationToken)
     {
-        var raw = await gitClient.DiffNameOnlyFromHeadAsync(cancellationToken).ConfigureAwait(false);
+        var raw = await _gitClient.DiffNameOnlyFromHeadAsync(cancellationToken).ConfigureAwait(false);
         var filePaths = raw.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
         var changed = filePaths
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
             .Where(f => !string.Equals(Path.GetFileName(f), "Program.cs", StringComparison.OrdinalIgnoreCase))
@@ -25,4 +25,9 @@ public class ChangeDetector
 
         return changed;
     }
+}
+
+public interface IChangeDetector
+{
+    Task<IReadOnlyList<string>> GetChangedCSharpFilesAsync(CancellationToken cancellationToken);
 }
