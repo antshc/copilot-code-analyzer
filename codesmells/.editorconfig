@@ -133,6 +133,9 @@ dotnet_diagnostic.CA1021.severity = none
 # CA1063: Implement I Disposable Correctly. Release: 5.0. Category: Design. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1063
 dotnet_diagnostic.CA1063.severity = none
 
+# The behavior of 'string.ToLower()' could vary based on the current user's locale settings. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1304
+dotnet_diagnostic.CA1304.severity = none
+
 # CA1305: Specify I Format Provider. Release: 5.0. Category: Globalization. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1305
 dotnet_diagnostic.CA1305.severity = none
 
