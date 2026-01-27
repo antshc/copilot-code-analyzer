@@ -6,10 +6,14 @@ namespace ReviewApp.Infrastructure;
 
 public class ProcessRunner : IProcessRunner
 {
+    private readonly string _workingDirectory;
     private readonly IProcessOutputSink _defaultSink;
 
-    public ProcessRunner(IProcessOutputSink? defaultSink = null)
-        => this._defaultSink = defaultSink ?? new ConsoleProcessOutputSink();
+    public ProcessRunner(string workingDirectory = "", IProcessOutputSink? defaultSink = null)
+    {
+        _workingDirectory = workingDirectory;
+        _defaultSink = defaultSink ?? new ConsoleProcessOutputSink();
+    }
 
     // Executes an external process and streams output through the configured sink.
     public async Task<CommandResult> RunAsync(
@@ -33,6 +37,10 @@ public class ProcessRunner : IProcessRunner
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8
         };
+        
+        startInfo.WorkingDirectory = string.IsNullOrWhiteSpace(_workingDirectory)
+            ? Environment.CurrentDirectory
+            : _workingDirectory;
 
         if (environmentVariables is not null)
         {

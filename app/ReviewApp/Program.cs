@@ -19,9 +19,9 @@ public class Program
 
     private static async Task<Reviewer> Create(string[] args, CancellationToken cancellationToken)
     {
-        var processRunner = new ProcessRunner();
+        var repoRoot = await GetRepoRoot(cancellationToken);
+        var processRunner = new ProcessRunner(repoRoot);
         var gitClient = new GitClient(processRunner);
-        var repoRoot = await gitClient.GetRepoRootAsync(cancellationToken);
         var artifacts = new OutputArtifacts(repoRoot);
 
         var appConfig = await AppConfigLoader.LoadAsync(args, cancellationToken);
@@ -53,5 +53,13 @@ public class Program
             fileSystem,
             downloader,
             artifacts);
+    }
+
+    private static async Task<string> GetRepoRoot(CancellationToken cancellationToken)
+    {
+        var baseProcessRunner = new ProcessRunner();
+        var baseGitClient = new GitClient(baseProcessRunner);
+        var repoRoot = await baseGitClient.GetRepoRootAsync(cancellationToken);
+        return repoRoot;
     }
 }
