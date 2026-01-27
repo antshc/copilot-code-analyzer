@@ -1,10 +1,14 @@
 ﻿using ReviewApp.Core.Abstractions;
-using ReviewApp.Infrastructure;
 
 namespace ReviewApp.Core;
 
 public class ChangeDetector : IChangeDetector
 {
+    private readonly HashSet<string> ExcludeFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Program.cs",
+        "Reviewer.cs"
+    };
     private readonly IGitClient _gitClient;
 
     public ChangeDetector(IGitClient gitClient) => _gitClient = gitClient;
@@ -16,7 +20,7 @@ public class ChangeDetector : IChangeDetector
 
         var changed = filePaths
             .Where(f => f.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            .Where(f => !string.Equals(Path.GetFileName(f), "Program.cs", StringComparison.OrdinalIgnoreCase))
+            .Where(f => !ExcludeFileNames.Contains(f))
             .ToArray();
 
         if (!changed.Any())
