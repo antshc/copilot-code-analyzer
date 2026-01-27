@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using ReviewApp.Core.Abstractions;
 
 namespace ReviewApp.Infrastructure;
 
@@ -87,17 +88,6 @@ public interface IProcessOutputSink
 
     // Handles a single stderr line from a process.
     void WriteStandardError(string line);
-}
-
-public interface IProcessRunner
-{
-    // Runs a process with optional environment variables and returns captured output.
-    Task<CommandResult> RunAsync(
-        string fileName,
-        string arguments,
-        IDictionary<string, string?>? environmentVariables = null,
-        IProcessOutputSink? outputSink = null,
-        CancellationToken cancellationToken = default);
 }
 
 public record CommandResult(int ExitCode, string StandardOutput, string StandardError)

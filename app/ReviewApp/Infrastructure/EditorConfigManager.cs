@@ -1,4 +1,6 @@
-﻿namespace ReviewApp.Infrastructure;
+﻿using ReviewApp.Core.Abstractions;
+
+namespace ReviewApp.Infrastructure;
 
 public class EditorConfigManager : IEditorConfigManager
 {
@@ -59,10 +61,4 @@ public class EditorConfigManager : IEditorConfigManager
 
         isApplied = false;
     }
-}
-
-public interface IEditorConfigManager
-{
-    Task ApplyMinimalConfigAsync(CancellationToken cancellationToken = default);
-    void RestoreOriginal();
 }

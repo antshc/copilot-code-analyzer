@@ -1,4 +1,6 @@
-﻿namespace ReviewApp.Infrastructure;
+﻿using ReviewApp.Core.Abstractions;
+
+namespace ReviewApp.Infrastructure;
 
 public class DotnetCli : IDotnetCli
 {
@@ -16,10 +18,4 @@ public class DotnetCli : IDotnetCli
 
         return _processRunner.RunAsync("dotnet", args, cancellationToken: cancellationToken);
     }
-}
-
-public interface IDotnetCli
-{
-    // Builds the given project with analyzer settings enabled.
-    Task<CommandResult> BuildWithAnalyzersAsync(string projectPath, CancellationToken cancellationToken = default);
 }

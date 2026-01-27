@@ -1,4 +1,5 @@
-﻿using ReviewApp.Infrastructure;
+﻿using ReviewApp.Core.Abstractions;
+using ReviewApp.Infrastructure;
 
 namespace ReviewApp.Core;
 

@@ -1,10 +1,6 @@
-﻿namespace ReviewApp.Infrastructure;
+﻿using ReviewApp.Core.Abstractions;
 
-public interface IContentDownloader
-{
-    // Downloads the content at the given URL as a string.
-    Task<string> DownloadStringAsync(string url, CancellationToken cancellationToken = default);
-}
+namespace ReviewApp.Infrastructure;
 
 public class CurlDownloader : IContentDownloader
 {

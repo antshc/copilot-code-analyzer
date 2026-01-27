@@ -1,4 +1,6 @@
-﻿namespace ReviewApp.Infrastructure;
+﻿using ReviewApp.Core.Abstractions;
+
+namespace ReviewApp.Infrastructure;
 
 public class CopilotClient : ICopilotClient
 {
@@ -18,10 +20,4 @@ public class CopilotClient : ICopilotClient
             throw new InvalidOperationException($"Copilot CLI failed: {result.StandardError.Trim()}");
         }
     }
-}
-
-public interface ICopilotClient
-{
-    // Executes the Copilot CLI with the provided prompt and token.
-    Task RunReviewAsync(string promptContent, string changesPath, string reportOutputPath, string token, CancellationToken cancellationToken = default);
 }
