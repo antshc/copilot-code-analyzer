@@ -6,6 +6,7 @@
   <Folder Name="/Tests/">
     <Project Path="app/Copilot.Test/Copilot.Test.csproj" />
     <Project Path="app/ProcessRunner.Test/ProcessRunner.Test.csproj" />
+    <Project Path="app/ReviewApp.Test/ReviewApp.Test.csproj" />
   </Folder>
   <Project Path="app/ReviewApp/ReviewApp.csproj" />
 </Solution>
