@@ -92,6 +92,9 @@ dotnet_diagnostic.IDE0160.severity = warning
 # Convert to top-level statements https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/IDE0210
 dotnet_diagnostic.IDE0210.severity = none
 
+# Use collection expression for array. https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0300
+dotnet_diagnostic.IDE0300.severity = none
+
 # Remove unnecessary using directives
 dotnet_diagnostic.IDE0005.severity = warning
 
