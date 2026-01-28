@@ -25,6 +25,10 @@ For each file in "@_changes/":
 - De-duplicate by (file, line, rule, message)
 - Sort by file → line → rule
 
+## Scope
+- Only files present in "@_changes/"
+- Only issues referencing those files
+
 Save results to ./report directory.
 
 ## Output (Markdown, exact format)
@@ -43,6 +47,3 @@ Save results to ./report directory.
 - <rule?> <message> (log)
 ```
 
-## Scope
-- Only files present in "@_changes/"
-- Only issues referencing those files
