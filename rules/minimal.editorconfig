@@ -188,3 +188,6 @@ dotnet_diagnostic.CA1859.severity = none
 
 # CA1863: Use Composite Format. Release: 8.0. Category: Performance. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1863
 dotnet_diagnostic.CA1863.severity = none
+
+# Compiler Warning (level 2) CS1587 https://learn.microsoft.com/en-us/dotnet/csharp/misc/cs1587
+dotnet_diagnostic.CS1587.severity = none
