@@ -36,8 +36,8 @@ public class Program
 
         var editorConfigManager = new EditorConfigManager(
             fileSystem,
-            downloader,
-            artifacts.EditorConfigPath,
+            appConfig.EditorConfig,
+            artifacts.OriginalEditorConfigPath,
             artifacts.EditorConfigBackupPath);
 
         var analyzerRunner = new AnalyzerRunner(dotnetCli, editorConfigManager, fileSystem, projectLocator, artifacts.ReportOut);
