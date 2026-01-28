@@ -6,7 +6,9 @@ public interface IFileSystemService
     void RecreateDirectory(string targetDirectory);
 
     // Writes text content to a file, creating parent directories when needed.
-    Task WriteFileAsync(string path, string content, CancellationToken cancellationToken = default);
+    Task WriteFileAsync(string path, string content, CancellationToken cancellationToken);
+
+    void DeleteFileIfExists(string path);
 
     // Deletes a directory if it exists.
     void DeleteDirectoryIfExists(string targetDirectory);

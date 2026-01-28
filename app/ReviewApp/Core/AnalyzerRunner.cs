@@ -35,14 +35,14 @@ public class AnalyzerRunner : IAnalyzerRunner
 
         var projectToFiles = MapProjectsToFiles(changedFiles);
 
-        await editorConfigManager.ApplyMinimalConfigAsync(cancellationToken).ConfigureAwait(false);
+        await editorConfigManager.ApplyMinimalConfigAsync(cancellationToken);
 
         try
         {
             foreach (var projectPath in projectToFiles.Keys)
             {
                 Console.WriteLine($"Running analyzer-enabled build for {projectPath}");
-                var result = await dotnetCli.BuildWithAnalyzersAsync(projectPath, cancellationToken).ConfigureAwait(false);
+                var result = await dotnetCli.BuildWithAnalyzersAsync(projectPath, cancellationToken);
 
                 if (!result.IsSuccess)
                 {
@@ -51,7 +51,7 @@ public class AnalyzerRunner : IAnalyzerRunner
 
                 var projectName = Path.GetFileNameWithoutExtension(projectPath);
                 var buildLogFileName = Path.Combine(reportDirectory, $"{projectName}.log");
-                await fileSystemService.WriteFileAsync(buildLogFileName, result.StandardOutput, cancellationToken).ConfigureAwait(false);
+                await fileSystemService.WriteFileAsync(buildLogFileName, result.StandardOutput, cancellationToken);
 
                 var fileNames = projectToFiles[projectPath].Select(Path.GetFileNameWithoutExtension).ToArray();
                 var filteredLines = result.StandardOutput
@@ -60,7 +60,8 @@ public class AnalyzerRunner : IAnalyzerRunner
                     .ToArray();
 
                 var buildDiagFileName = Path.Combine(reportDirectory, $"{projectName}.diag.log");
-                await fileSystemService.WriteFileAsync(buildDiagFileName, string.Join(Environment.NewLine, filteredLines), cancellationToken).ConfigureAwait(false);
+                await fileSystemService.WriteFileAsync(buildDiagFileName, string.Join(Environment.NewLine, filteredLines), cancellationToken);
+                fileSystemService.DeleteFileIfExists(buildLogFileName);
             }
         }
         finally

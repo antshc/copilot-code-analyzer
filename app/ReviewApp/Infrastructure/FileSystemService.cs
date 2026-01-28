@@ -28,6 +28,16 @@ public class FileSystemService : IFileSystemService
         await File.WriteAllTextAsync(path, content, cancellationToken).ConfigureAwait(false);
     }
 
+    public void DeleteFileIfExists(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        File.Delete(path);
+    }
+
     // Removes an existing directory recursively.
     public void DeleteDirectoryIfExists(string targetDirectory)
     {
