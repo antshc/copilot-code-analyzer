@@ -25,6 +25,8 @@ For each file in "@_changes/":
 - De-duplicate by (file, line, rule, message)
 - Sort by file → line → rule
 
+Save results to ./report directory.
+
 ## Output (Markdown, exact format)
 ```md
 # Analyzer Issues Mapped to Diff
