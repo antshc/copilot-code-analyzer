@@ -15,4 +15,7 @@ if [[ -z "$branchName" ]]; then
   exit 1
 fi
 
-"$REVIEW_SCRIPT" "$GH_TOKEN" "main" "$branchName"
+REVIEW_PROMPT=$(curl -fsSL https://raw.githubusercontent.com/antshc/copilot-code-analyzer/refs/heads/main/prompts/review.prompt.md)
+EDITORCONFIG=$(curl -fsSL https://raw.githubusercontent.com/antshc/copilot-code-analyzer/refs/heads/main/rules/minimal.editorconfig)
+
+"$REVIEW_SCRIPT" --token "$GH_TOKEN" --base-branch "main" --branch "$branchName" --review-prompt "$REVIEW_PROMPT" --editorconfig "$EDITORCONFIG" --analyzers enable

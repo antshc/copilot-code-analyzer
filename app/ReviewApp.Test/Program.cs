@@ -41,33 +41,3 @@ class Program
         return appConfig;
     }
 }
-//
-// // Validate required arguments
-// if (!parsedArgs.TryGetValue("--token", out var ghToken) || string.IsNullOrWhiteSpace(ghToken))
-// {
-//     throw new ArgumentException("Missing required argument: --token <GH_TOKEN>");
-// }
-//
-// if (!parsedArgs.TryGetValue("--base-branch", out var baseBranchName) || string.IsNullOrWhiteSpace(baseBranchName))
-// {
-//     throw new ArgumentException("Missing required argument: --base-branch <BASE_BRANCH_NAME>");
-// }
-//
-// if (!parsedArgs.TryGetValue("--branch", out var branchName) || string.IsNullOrWhiteSpace(branchName))
-// {
-//     throw new ArgumentException("Missing required argument: --branch <BRANCH_NAME>");
-// }
-//
-// if (!parsedArgs.TryGetValue("--review-prompt", out var reviewPrompt) || string.IsNullOrWhiteSpace(reviewPrompt))
-// {
-//     throw new ArgumentException("Missing required argument: --review-prompt <REVIEW_PROMPT>");
-// }
-//
-// if (!parsedArgs.TryGetValue("--editorconfig", out var editorconfig) || string.IsNullOrWhiteSpace(editorconfig))
-// {
-//     throw new ArgumentException("Missing required argument: --editorconfig <EDITORCONFIG>");
-// }
-//
-// // Parse optional arguments with defaults
-// var analyzersValue = parsedArgs.GetValueOrDefault("--analyzers", "enable");
-// var analyzersEnabled = analyzersValue.Equals("enable", StringComparison.OrdinalIgnoreCase);
