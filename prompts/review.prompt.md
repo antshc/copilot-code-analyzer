@@ -44,6 +44,16 @@ Check cross-file contracts, shared invariants, and interactions.
 - [ ] Unnecessary complexity or indirection is avoided (no over-engineering)
 - [ ] Abstraction leaks
 
+## Constraints
+- Do not reformat code
+- Do not propose style-only changes
+- Prefer minimal diffs (smallest change that fixes the issue; no refactors unless needed for correctness/safety)
+- Assume analyzers validate style
+- Review code in the @_changes directory. Do not search files outside the specified _changes directory. 
+- Do not build or restore the project dependencies.
+
+Save results to ./report directory.
+
 ## Output Format (mandatory)
 ```md
 # Code Analysis Report
@@ -71,11 +81,4 @@ Check cross-file contracts, shared invariants, and interactions.
 - **FileName:**
 - Short note only
 - Optional suggestion only
-
-## Constraints
-- Do not reformat code
-- Do not propose style-only changes
-- Prefer minimal diffs (smallest change that fixes the issue; no refactors unless needed for correctness/safety)
-- Assume analyzers validate style
-- If unsure, ask a clarifying question
 ```
