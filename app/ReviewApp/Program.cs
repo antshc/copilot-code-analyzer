@@ -26,7 +26,7 @@ public class Program
 
         var appConfig = await AppConfigLoader.LoadAsync(args, cancellationToken);
         var branchState = new BranchState(gitClient);
-        var fileSystem = new FileSystemService();
+        var fileSystem = new FileSystemService(repoRoot);
         var dotnetCli = new DotnetCli(processRunner);
         var copilotCli = new CopilotClient(processRunner);
         var projectLocator = new ProjectLocator(artifacts.RepoRootDirectory);
