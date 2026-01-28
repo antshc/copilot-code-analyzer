@@ -4,41 +4,38 @@ namespace ReviewApp.Infrastructure;
 
 public class EditorConfigManager : IEditorConfigManager
 {
-    private static readonly string MinimalEditorConfigUrl = "https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/rules/minimal.editorconfig";
-
-    private readonly IFileSystemService fileSystemService;
-    private readonly IContentDownloader downloader;
-    private readonly string editorConfigPath;
-    private readonly string backupPath;
+    private readonly IFileSystemService _fileSystemService;
+    private readonly string _editorConfig;
+    private readonly string _originalEditorConfigPath;
+    private readonly string _backupPath;
     private bool isApplied;
 
     public EditorConfigManager(
         IFileSystemService fileSystemService,
-        IContentDownloader downloader,
-        string editorConfigPath,
+        string editorConfig,
+        string originalEditorConfigPath,
         string backupPath)
     {
-        this.fileSystemService = fileSystemService;
-        this.downloader = downloader;
-        this.editorConfigPath = editorConfigPath;
-        this.backupPath = backupPath;
+        _fileSystemService = fileSystemService;
+        _editorConfig = editorConfig;
+        _originalEditorConfigPath = originalEditorConfigPath;
+        _backupPath = backupPath;
     }
 
     // Applies the minimal .editorconfig, backing up any existing configuration.
-    public async Task ApplyMinimalConfigAsync(CancellationToken cancellationToken = default)
+    public async Task ApplyMinimalConfigAsync(CancellationToken cancellationToken)
     {
         if (isApplied)
         {
             return;
         }
 
-        if (File.Exists(editorConfigPath))
+        if (File.Exists(_originalEditorConfigPath))
         {
-            fileSystemService.CopyFile(editorConfigPath, backupPath);
+            _fileSystemService.CopyFile(_originalEditorConfigPath, _backupPath);
         }
 
-        var content = await downloader.DownloadStringAsync(MinimalEditorConfigUrl, cancellationToken).ConfigureAwait(false);
-        await fileSystemService.WriteFileAsync(editorConfigPath, content, cancellationToken).ConfigureAwait(false);
+        await _fileSystemService.WriteFileAsync(_originalEditorConfigPath, _editorConfig, cancellationToken);
         isApplied = true;
     }
 
@@ -50,13 +47,13 @@ public class EditorConfigManager : IEditorConfigManager
             return;
         }
 
-        if (File.Exists(backupPath))
+        if (File.Exists(_backupPath))
         {
-            fileSystemService.MoveFile(backupPath, editorConfigPath);
+            _fileSystemService.MoveFile(_backupPath, _originalEditorConfigPath);
         }
         else
         {
-            fileSystemService.DeleteFile(editorConfigPath);
+            _fileSystemService.DeleteFile(_originalEditorConfigPath);
         }
 
         isApplied = false;

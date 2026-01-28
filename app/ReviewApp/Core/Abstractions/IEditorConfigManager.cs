@@ -2,6 +2,6 @@
 
 public interface IEditorConfigManager
 {
-    Task ApplyMinimalConfigAsync(CancellationToken cancellationToken = default);
+    Task ApplyMinimalConfigAsync(CancellationToken cancellationToken);
     void RestoreOriginal();
 }

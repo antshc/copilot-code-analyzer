@@ -12,15 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="appsettings.local.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <Compile Remove="Changes\Ca1001.cs" />
       <Content Include="..\ReviewApp\appsettings.local.json">
         <Link>appsettings.local.json</Link>
-      </Content>
-      <Content Include="Changes\Ca1001.cs">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
 

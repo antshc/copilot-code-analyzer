@@ -25,7 +25,6 @@ public class Program
         var artifacts = new OutputArtifacts(repoRoot);
 
         var appConfig = await AppConfigLoader.LoadAsync(args, cancellationToken);
-        var downloader = new CurlDownloader(processRunner);
         var branchState = new BranchState(gitClient);
         var fileSystem = new FileSystemService();
         var dotnetCli = new DotnetCli(processRunner);
@@ -36,8 +35,8 @@ public class Program
 
         var editorConfigManager = new EditorConfigManager(
             fileSystem,
-            downloader,
-            artifacts.EditorConfigPath,
+            appConfig.EditorConfig,
+            artifacts.OriginalEditorConfigPath,
             artifacts.EditorConfigBackupPath);
 
         var analyzerRunner = new AnalyzerRunner(dotnetCli, editorConfigManager, fileSystem, projectLocator, artifacts.ReportOut);
@@ -51,7 +50,6 @@ public class Program
             changesDetector,
             diffCollector,
             fileSystem,
-            downloader,
             artifacts);
     }
 

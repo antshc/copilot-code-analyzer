@@ -2,7 +2,7 @@
 
 namespace ReviewApp.Infrastructure;
 
-public class CurlDownloader : IContentDownloader
+public class CurlDownloader
 {
     private readonly IProcessRunner _processRunner;
 

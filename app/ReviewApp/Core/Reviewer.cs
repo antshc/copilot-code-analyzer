@@ -1,12 +1,9 @@
 ﻿using ReviewApp.Core.Abstractions;
-using ReviewApp.Infrastructure;
 
 namespace ReviewApp.Core;
 
 internal class Reviewer
 {
-    private static readonly string ReviewPromptUrl = "https://raw.githubusercontent.com/antshc/copilot-code-analyzer/main/prompts/review.prompt.md";
-
     private readonly IGitClient _gitCli;
     private readonly ICopilotClient _copilotCli;
     private readonly IAnalyzerRunner _analyzerRunner;
@@ -15,7 +12,6 @@ internal class Reviewer
     private readonly IChangeDetector _changesDetector;
     private readonly IDiffCollector _diffCollector;
     private readonly IFileSystemService _fileSystem;
-    private readonly IContentDownloader _downloader;
     private readonly OutputArtifacts _artifacts;
 
     public Reviewer(
@@ -27,7 +23,6 @@ internal class Reviewer
         IChangeDetector changesDetector,
         IDiffCollector diffCollector,
         IFileSystemService fileSystem,
-        IContentDownloader downloader,
         OutputArtifacts artifacts)
     {
         _gitCli = gitCli;
@@ -38,7 +33,6 @@ internal class Reviewer
         _changesDetector = changesDetector;
         _diffCollector = diffCollector;
         _fileSystem = fileSystem;
-        _downloader = downloader;
         _artifacts = artifacts;
     }
 
@@ -53,7 +47,7 @@ internal class Reviewer
 
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
-        await PerformChangesReview(_artifacts.OutputDir, _artifacts.ReportOut, _downloader, _copilotCli, _appConfig, cancellationToken);
+        await PerformChangesReview(_copilotCli, _appConfig, cancellationToken);
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await RestoreBranchState(_gitCli, _appConfig.BranchName, cancellationToken);
     }
@@ -85,13 +79,11 @@ internal class Reviewer
     private static async Task PrepareReviewChanges(IDiffCollector diffCollector, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken) =>
         await diffCollector.CollectAsync(changedFiles, cancellationToken);
 
-    private static async Task PerformChangesReview(string outputDir, string reportOut, IContentDownloader downloader, ICopilotClient copilotCli, AppConfig appConfig,
+    private static async Task PerformChangesReview(ICopilotClient copilotCli, AppConfig appConfig,
         CancellationToken cancellationToken)
     {
-        Console.WriteLine($"Downloading prompt from {ReviewPromptUrl}");
-        string reviewPrompt = await downloader.DownloadStringAsync(ReviewPromptUrl, cancellationToken);
-        var prompt = $"{reviewPrompt} @{outputDir}. Do not search files outside the specified directory. Do not build or restore the project. Save results to {reportOut}";
-        await copilotCli.RunReviewAsync(prompt, appConfig.CopilotToken, cancellationToken);
+        Console.WriteLine("Perform changes review.");
+        await copilotCli.RunReviewAsync(appConfig.ReviewPrompt, appConfig.CopilotToken, cancellationToken);
     }
 
     private static void CleanupChanges(IFileSystemService fileSystem, string outputDir) => fileSystem.RecreateDirectory(outputDir);
