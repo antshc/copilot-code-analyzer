@@ -43,11 +43,11 @@ internal class Reviewer
         await CheckoutReviewBranch(_branchState, _appConfig, cancellationToken);
         IReadOnlyList<string> changedFiles = await ReadChangedFiles(_changesDetector, cancellationToken);
 
-        await RunAnalyzersIfEnabled(_appConfig, _analyzerRunner, changedFiles, cancellationToken);
+        await RunAnalyzersIfEnabled(_appConfig, _copilotCli, _analyzerRunner, changedFiles, cancellationToken);
 
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
-        await PerformChangesReview(_copilotCli, _appConfig, cancellationToken);
+        await RunPrompt(_copilotCli, _appConfig.ReviewPrompt, _appConfig.CopilotToken, cancellationToken);
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await RestoreBranchState(_gitCli, _appConfig.BranchName, cancellationToken);
     }
@@ -59,11 +59,12 @@ internal class Reviewer
         return changedFiles;
     }
 
-    private static async Task RunAnalyzersIfEnabled(AppConfig appConfig, IAnalyzerRunner analyzerManager, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken)
+    private static async Task RunAnalyzersIfEnabled(AppConfig appConfig, ICopilotClient copilotCli, IAnalyzerRunner analyzerManager, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken)
     {
         if (appConfig.AnalyzersEnabled)
         {
             await analyzerManager.RunAsync(changedFiles, cancellationToken);
+            await RunPrompt(copilotCli, appConfig.CodeAnalysisReportPrompt, appConfig.CopilotToken, cancellationToken);
         }
         else
         {
@@ -79,11 +80,10 @@ internal class Reviewer
     private static async Task PrepareReviewChanges(IDiffCollector diffCollector, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken) =>
         await diffCollector.CollectAsync(changedFiles, cancellationToken);
 
-    private static async Task PerformChangesReview(ICopilotClient copilotCli, AppConfig appConfig,
-        CancellationToken cancellationToken)
+    private static async Task RunPrompt(ICopilotClient copilotCli, string reviewPrompt, string copilotToken, CancellationToken cancellationToken)
     {
-        Console.WriteLine("Perform changes review.");
-        await copilotCli.RunReviewAsync(appConfig.ReviewPrompt, appConfig.CopilotToken, cancellationToken);
+        Console.WriteLine($"Perform copilot review: {Environment.NewLine} {reviewPrompt}");
+        await copilotCli.RunReviewAsync(reviewPrompt, copilotToken, cancellationToken);
     }
 
     private static void CleanupChanges(IFileSystemService fileSystem, string outputDir) => fileSystem.RecreateDirectory(outputDir);

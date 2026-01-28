@@ -34,6 +34,11 @@ public static class AppConfigLoader
             {
                 throw new ArgumentException("Missing required argument: --review-prompt <REVIEW_PROMPT>");
             }
+            
+            if (!parsedArgs.TryGetValue("--code-analysis-prompt", out var codeAnalysisPrompt) || string.IsNullOrWhiteSpace(codeAnalysisPrompt))
+            {
+                throw new ArgumentException("Missing required argument: --code-analysis-prompt <CODE_ANALYSIS_PROMPT>");
+            }
 
             if (!parsedArgs.TryGetValue("--editorconfig", out var editorconfig) || string.IsNullOrWhiteSpace(editorconfig))
             {
@@ -44,7 +49,7 @@ public static class AppConfigLoader
             var analyzersValue = parsedArgs.GetValueOrDefault("--analyzers", "enable");
             var analyzersEnabled = analyzersValue.Equals("enable", StringComparison.OrdinalIgnoreCase);
 
-            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, editorconfig, analyzersEnabled);
+            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, codeAnalysisPrompt, editorconfig, analyzersEnabled);
         }
 
         var jsonPath = Path.Combine(Directory.GetCurrentDirectory(), LocalConfigFileName);

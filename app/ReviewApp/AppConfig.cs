@@ -5,5 +5,6 @@ public sealed record AppConfig(
     string BaseBranchName,
     string BranchName,
     string ReviewPrompt,
+    string CodeAnalysisReportPrompt,
     string EditorConfig,
     bool AnalyzersEnabled);
