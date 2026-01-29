@@ -7,4 +7,5 @@ public sealed record AppConfig(
     string ReviewPrompt,
     string CodeAnalysisReportPrompt,
     string EditorConfig,
-    bool AnalyzersEnabled);
+    bool AnalyzersEnabled,
+    bool CodeAnalysisReportEnabled);
