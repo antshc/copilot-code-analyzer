@@ -2,12 +2,12 @@
 
 public class NamingRuleViolator
 {
-    private const int BadConstant = 1;
+    private const int BadConstant1 = 1;
     private int BadCounter;
 
     public NamingRuleViolator(int startingValue)
     {
-        BadCounter = startingValue + BadConstant;
+        BadCounter = startingValue + BadConstant1;
     }
 
     public void Increment()

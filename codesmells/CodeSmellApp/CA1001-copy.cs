@@ -1,11 +1,11 @@
 namespace CodeSmellApp
 {
     // This class violates CA1001 because it owns a disposable field but does not implement IDisposable.
-    public class ViolatesCa1001Copy
+    public class ViolatesCa1001
     {
         private MemoryStream m_mmemoryStream;
 
-        public ViolatesCa1001Copy()
+        public ViolatesCa1001()
         {
             m_mmemoryStream = new MemoryStream();
         }
