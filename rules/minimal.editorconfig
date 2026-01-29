@@ -14,14 +14,14 @@ indent_size = 4
 
 dotnet_analyzer_diagnostic.category-Design.severity = warning
 dotnet_analyzer_diagnostic.category-Documentation.severity = none
-dotnet_analyzer_diagnostic.category-Globalization.severity = warning
+dotnet_analyzer_diagnostic.category-Globalization.severity = none
 dotnet_analyzer_diagnostic.category-Interoperability.severity = warning
 dotnet_analyzer_diagnostic.category-Maintainability.severity = warning
 dotnet_analyzer_diagnostic.category-Naming.severity = warning
 dotnet_analyzer_diagnostic.category-Performance.severity = warning
 dotnet_analyzer_diagnostic.category-Reliability.severity = warning
 dotnet_analyzer_diagnostic.category-Security.severity = warning
-dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Style.severity = none
 dotnet_analyzer_diagnostic.category-Usage.severity = warning
 
 ###############################
@@ -91,6 +91,9 @@ dotnet_diagnostic.IDE0160.severity = warning
 
 # Convert to top-level statements https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/IDE0210
 dotnet_diagnostic.IDE0210.severity = none
+
+# Use collection expression for array. https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0300
+dotnet_diagnostic.IDE0300.severity = none
 
 # Remove unnecessary using directives
 dotnet_diagnostic.IDE0005.severity = warning
@@ -188,3 +191,6 @@ dotnet_diagnostic.CA1859.severity = none
 
 # CA1863: Use Composite Format. Release: 8.0. Category: Performance. https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1863
 dotnet_diagnostic.CA1863.severity = none
+
+# Compiler Warning (level 2) CS1587 https://learn.microsoft.com/en-us/dotnet/csharp/misc/cs1587
+dotnet_diagnostic.CS1587.severity = none

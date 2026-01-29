@@ -41,10 +41,17 @@ public static class AppConfigLoader
             }
 
             // Parse optional arguments with defaults
+
+            if (!parsedArgs.TryGetValue("--code-analysis-prompt", out var codeAnalysisPrompt) || string.IsNullOrWhiteSpace(codeAnalysisPrompt))
+            {
+                Console.WriteLine("--code-analysis-prompt is not set, use default prompt.");
+                codeAnalysisPrompt = Resources.AnalyzerReportPrompt;
+            }
+
             var analyzersValue = parsedArgs.GetValueOrDefault("--analyzers", "enable");
             var analyzersEnabled = analyzersValue.Equals("enable", StringComparison.OrdinalIgnoreCase);
 
-            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, editorconfig, analyzersEnabled);
+            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, codeAnalysisPrompt, editorconfig, analyzersEnabled);
         }
 
         var jsonPath = Path.Combine(Directory.GetCurrentDirectory(), LocalConfigFileName);

@@ -1,4 +1,5 @@
 ﻿using ReviewApp.Core.Abstractions;
+using ReviewApp.Core.Abstractions.Analyzers;
 
 namespace ReviewApp.Core;
 
@@ -47,7 +48,7 @@ internal class Reviewer
 
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
-        await PerformChangesReview(_copilotCli, _appConfig, cancellationToken);
+        await RunPrompt(_copilotCli, _appConfig.ReviewPrompt, _appConfig.CopilotToken, cancellationToken);
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await RestoreBranchState(_gitCli, _appConfig.BranchName, cancellationToken);
     }
@@ -79,11 +80,10 @@ internal class Reviewer
     private static async Task PrepareReviewChanges(IDiffCollector diffCollector, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken) =>
         await diffCollector.CollectAsync(changedFiles, cancellationToken);
 
-    private static async Task PerformChangesReview(ICopilotClient copilotCli, AppConfig appConfig,
-        CancellationToken cancellationToken)
+    private static async Task RunPrompt(ICopilotClient copilotCli, string reviewPrompt, string copilotToken, CancellationToken cancellationToken)
     {
-        Console.WriteLine("Perform changes review.");
-        await copilotCli.RunReviewAsync(appConfig.ReviewPrompt, appConfig.CopilotToken, cancellationToken);
+        Console.WriteLine($"Perform copilot review: {Environment.NewLine} {reviewPrompt}");
+        await copilotCli.RunReviewAsync(reviewPrompt, copilotToken, cancellationToken);
     }
 
     private static void CleanupChanges(IFileSystemService fileSystem, string outputDir) => fileSystem.RecreateDirectory(outputDir);

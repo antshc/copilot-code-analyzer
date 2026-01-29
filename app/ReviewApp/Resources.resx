@@ -1,4 +1,25 @@
----
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="AnalyzerReportPrompt" xml:space="preserve">
+		<value>---
 description: 'Filter code analysis rules and map them to the file diff..'
 ---
 
@@ -35,15 +56,17 @@ Save results to ./report directory.
 ```md
 # Analyzer Issues Mapped to Diff
 
-## <file path>
+## &lt;file path&gt;
 
 ### FROM_DIFF
-- Line <line>: <Rule> — <Message>
+- Line &lt;line&gt;: &lt;Rule&gt; — &lt;Message&gt;
 
 ### NOT_FROM_DIFF
-- Line <line>: <Rule> — <Message>
+- Line &lt;line&gt;: &lt;Rule&gt; — &lt;Message&gt;
 
 ### UNMAPPABLE
-- <rule?> <message> (log)
+- &lt;rule?&gt; &lt;message&gt; (log)
 ```
-
+</value>
+	</data>
+</root>
