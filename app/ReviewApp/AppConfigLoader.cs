@@ -48,10 +48,13 @@ public static class AppConfigLoader
                 codeAnalysisPrompt = Resources.AnalyzerReportPrompt;
             }
 
+            var codeAnalysisReport = parsedArgs.GetValueOrDefault("--code-analysis-report", "disable");
+            var codeAnalysisReportEnabled = codeAnalysisReport.Equals("enable", StringComparison.OrdinalIgnoreCase);
+
             var analyzersValue = parsedArgs.GetValueOrDefault("--analyzers", "enable");
             var analyzersEnabled = analyzersValue.Equals("enable", StringComparison.OrdinalIgnoreCase);
 
-            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, codeAnalysisPrompt, editorconfig, analyzersEnabled);
+            return new AppConfig(ghToken, baseBranchName, branchName, reviewPrompt, codeAnalysisPrompt, editorconfig, analyzersEnabled, codeAnalysisReportEnabled);
         }
 
         var jsonPath = Path.Combine(Directory.GetCurrentDirectory(), LocalConfigFileName);

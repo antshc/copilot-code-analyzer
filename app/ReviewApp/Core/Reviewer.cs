@@ -64,7 +64,7 @@ internal class Reviewer
     {
         if (appConfig.AnalyzersEnabled)
         {
-            await analyzerManager.RunAsync(changedFiles, cancellationToken);
+            await analyzerManager.RunAsync(changedFiles, appConfig.CodeAnalysisReportEnabled, cancellationToken);
         }
         else
         {

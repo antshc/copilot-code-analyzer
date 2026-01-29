@@ -32,7 +32,7 @@ public class AnalyzerRunner : IAnalyzerRunner
     }
 
     // Runs analyzer-enabled builds for projects containing changed files and writes diagnostics.
-    public async Task RunAsync(IReadOnlyList<string> changedFiles, CancellationToken cancellationToken = default)
+    public async Task RunAsync(IReadOnlyList<string> changedFiles, bool appConfigCodeAnalysisReportEnabled, CancellationToken cancellationToken = default)
     {
         if (!changedFiles.Any())
         {
@@ -58,7 +58,10 @@ public class AnalyzerRunner : IAnalyzerRunner
                 await FilterAnalyzerRules(result.StandardOutput, projectPath, projectToFiles, cancellationToken);
             }
 
-            await RunPrompt(_copilotClient, _appConfig.CodeAnalysisReportPrompt, _appConfig.CopilotToken, cancellationToken);
+            if (appConfigCodeAnalysisReportEnabled)
+            {
+                await RunPrompt(_copilotClient, _appConfig.CodeAnalysisReportPrompt, _appConfig.CopilotToken, cancellationToken);
+            }
         }
         finally
         {
