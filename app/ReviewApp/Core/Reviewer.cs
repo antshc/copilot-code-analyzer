@@ -40,11 +40,10 @@ internal class Reviewer
     public async Task PerformReviewAsync(CancellationToken cancellationToken = default)
     {
         CleanupReport(_fileSystem, _artifacts.ReportOut);
-
+        CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await CheckoutReviewBranch(_branchState, _appConfig, cancellationToken);
         IReadOnlyList<string> changedFiles = await ReadChangedFiles(_changesDetector, cancellationToken);
 
-        CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
 
         await RunAnalyzersIfEnabled(_appConfig, _analyzerRunner, changedFiles, cancellationToken);
