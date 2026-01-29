@@ -1,6 +1,5 @@
 ﻿using ReviewApp.Core.Abstractions;
 using ReviewApp.Core.Abstractions.Analyzers;
-using ReviewApp.Core.Analyzers;
 
 namespace ReviewApp.Core;
 
@@ -45,7 +44,7 @@ internal class Reviewer
         await CheckoutReviewBranch(_branchState, _appConfig, cancellationToken);
         IReadOnlyList<string> changedFiles = await ReadChangedFiles(_changesDetector, cancellationToken);
 
-        await RunAnalyzersIfEnabled(_appConfig, _copilotCli, _analyzerRunner, changedFiles, cancellationToken);
+        await RunAnalyzersIfEnabled(_appConfig, _analyzerRunner, changedFiles, cancellationToken);
 
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
@@ -61,12 +60,11 @@ internal class Reviewer
         return changedFiles;
     }
 
-    private static async Task RunAnalyzersIfEnabled(AppConfig appConfig, ICopilotClient copilotCli, IAnalyzerRunner analyzerManager, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken)
+    private static async Task RunAnalyzersIfEnabled(AppConfig appConfig, IAnalyzerRunner analyzerManager, IReadOnlyList<string> changedFiles, CancellationToken cancellationToken)
     {
         if (appConfig.AnalyzersEnabled)
         {
             await analyzerManager.RunAsync(changedFiles, cancellationToken);
-            await RunPrompt(copilotCli, appConfig.CodeAnalysisReportPrompt, appConfig.CopilotToken, cancellationToken);
         }
         else
         {
