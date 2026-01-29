@@ -55,20 +55,7 @@ public class AnalyzerRunner : IAnalyzerRunner
                     throw new InvalidOperationException($"dotnet build failed for {projectPath}: {result.StandardError.Trim()}");
                 }
 
-                var projectName = Path.GetFileNameWithoutExtension(projectPath);
-                var buildLogFileName = Path.Combine(_reportDirectory, $"{projectName}.log");
-                await _fileSystemService.WriteFileAsync(buildLogFileName, result.StandardOutput, cancellationToken);
-
-                var fileNames = projectToFiles[projectPath].Select(Path.GetFileNameWithoutExtension).ToArray();
-
-                var filteredLines = result.StandardOutput
-                    .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
-                    .Where(line => fileNames.Any(line.Contains))
-                    .ToArray();
-
-                var buildDiagFileName = Path.Combine(_reportDirectory, $"{projectName}.diag.log");
-                await _fileSystemService.WriteFileAsync(buildDiagFileName, string.Join(Environment.NewLine, filteredLines), cancellationToken);
-                _fileSystemService.DeleteFileIfExists(buildLogFileName);
+                await FilterAnalyzerRules(result.StandardOutput, projectPath, projectToFiles, cancellationToken);
             }
 
             await RunPrompt(_copilotClient, _appConfig.CodeAnalysisReportPrompt, _appConfig.CopilotToken, cancellationToken);
@@ -77,6 +64,24 @@ public class AnalyzerRunner : IAnalyzerRunner
         {
             _editorConfigManager.RestoreOriginal();
         }
+    }
+
+    private async Task FilterAnalyzerRules(string buildOutput, string projectPath, Dictionary<string, HashSet<string>> projectToFiles, CancellationToken cancellationToken)
+    {
+        var projectName = Path.GetFileNameWithoutExtension(projectPath);
+        var buildLogFileName = Path.Combine(_reportDirectory, $"{projectName}.log");
+        await _fileSystemService.WriteFileAsync(buildLogFileName, buildOutput, cancellationToken);
+
+        var fileNames = projectToFiles[projectPath].Select(Path.GetFileNameWithoutExtension).ToArray();
+
+        var filteredLines = buildOutput
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Where(line => fileNames.Any(line.Contains))
+            .ToArray();
+
+        var buildDiagFileName = Path.Combine(_reportDirectory, $"{projectName}.diag.log");
+        await _fileSystemService.WriteFileAsync(buildDiagFileName, string.Join(Environment.NewLine, filteredLines), cancellationToken);
+        _fileSystemService.DeleteFileIfExists(buildLogFileName);
     }
 
     private Dictionary<string, HashSet<string>> MapProjectsToFiles(IReadOnlyList<string> changedFiles)
