@@ -44,10 +44,11 @@ internal class Reviewer
         await CheckoutReviewBranch(_branchState, _appConfig, cancellationToken);
         IReadOnlyList<string> changedFiles = await ReadChangedFiles(_changesDetector, cancellationToken);
 
-        await RunAnalyzersIfEnabled(_appConfig, _analyzerRunner, changedFiles, cancellationToken);
-
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await PrepareReviewChanges(_diffCollector, changedFiles, cancellationToken);
+
+        await RunAnalyzersIfEnabled(_appConfig, _analyzerRunner, changedFiles, cancellationToken);
+
         await RunPrompt(_copilotCli, _appConfig.ReviewPrompt, _appConfig.CopilotToken, cancellationToken);
         CleanupChanges(_fileSystem, _artifacts.OutputDir);
         await RestoreBranchState(_gitCli, _appConfig.BranchName, cancellationToken);
