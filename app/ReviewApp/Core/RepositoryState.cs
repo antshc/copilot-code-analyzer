@@ -1,5 +1,4 @@
 ﻿using ReviewApp.Core.Abstractions;
-using ReviewApp.Infrastructure;
 
 namespace ReviewApp.Core;
 
@@ -17,6 +16,7 @@ internal class BranchState : IBranchState
         await _gitClient.CheckoutAsync($"origin/{branchName}", cancellationToken);
         var commit = await _gitClient.FindMergeBaseAsync("HEAD", $"origin/{baseBranchName}", cancellationToken);
         await _gitClient.ResetSoftAsync(commit, cancellationToken);
+        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
     }
 }
 
