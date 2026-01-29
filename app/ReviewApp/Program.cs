@@ -1,4 +1,5 @@
 using ReviewApp.Core;
+using ReviewApp.Core.Analyzers;
 using ReviewApp.Infrastructure;
 
 namespace ReviewApp;

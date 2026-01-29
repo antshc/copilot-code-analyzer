@@ -1,6 +1,6 @@
 ﻿using ReviewApp.Core.Abstractions;
 
-namespace ReviewApp.Infrastructure;
+namespace ReviewApp.Core.Analyzers;
 
 public class EditorConfigManager : IEditorConfigManager
 {

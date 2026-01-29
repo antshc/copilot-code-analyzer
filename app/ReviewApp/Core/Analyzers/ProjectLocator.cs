@@ -1,4 +1,4 @@
-﻿namespace ReviewApp.Core;
+﻿namespace ReviewApp.Core.Analyzers;
 
 public class ProjectLocator : IProjectLocator
 {
@@ -27,9 +27,4 @@ public class ProjectLocator : IProjectLocator
 
         throw new FileNotFoundException($"No .csproj file found for {relativeSourceFile}, in the absolutePath {absolutePath}");
     }
-}
-
-public interface IProjectLocator
-{
-    string FindProjectForFile(string relativeSourceFile);
 }

@@ -1,4 +1,6 @@
 ﻿using ReviewApp.Core.Abstractions;
+using ReviewApp.Core.Abstractions.Analyzers;
+using ReviewApp.Core.Analyzers;
 
 namespace ReviewApp.Core;
 

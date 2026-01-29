@@ -1,7 +1,7 @@
 ﻿using ReviewApp.Core.Abstractions;
-using ReviewApp.Infrastructure;
+using ReviewApp.Core.Abstractions.Analyzers;
 
-namespace ReviewApp.Core;
+namespace ReviewApp.Core.Analyzers;
 
 public class AnalyzerRunner : IAnalyzerRunner
 {
@@ -90,9 +90,4 @@ public class AnalyzerRunner : IAnalyzerRunner
 
         return projectToFiles;
     }
-}
-
-public interface IAnalyzerRunner
-{
-    Task RunAsync(IReadOnlyList<string> changedFiles, CancellationToken cancellationToken = default);
 }
