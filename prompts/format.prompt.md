@@ -28,8 +28,13 @@ For each file in "@_changes/":
 ## Scope
 - Only files present in "@_changes/"
 - Only issues referencing those files
-
-Save results to ./report directory.
+- Save results to ./report directory.
+  
+## Constraints
+- Do not reformat code
+- Do not build or restore the project dependencies.
+- DO NOT write any code.
+- DO NOT scan other directories.
 
 ## Output (Markdown, exact format)
 ```md
