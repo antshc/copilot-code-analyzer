@@ -23,12 +23,12 @@ public class AnalyzerRunner : IAnalyzerRunner
         string reportDirectory)
     {
         _appConfig = appConfig;
-        this._dotnetCli = dotnetCli;
+        _dotnetCli = dotnetCli;
         _copilotClient = copilotClient;
-        this._editorConfigManager = editorConfigManager;
-        this._fileSystemService = fileSystemService;
-        this._projectLocator = projectLocator;
-        this._reportDirectory = reportDirectory;
+        _editorConfigManager = editorConfigManager;
+        _fileSystemService = fileSystemService;
+        _projectLocator = projectLocator;
+        _reportDirectory = reportDirectory;
     }
 
     // Runs analyzer-enabled builds for projects containing changed files and writes diagnostics.

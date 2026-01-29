@@ -34,11 +34,6 @@ public static class AppConfigLoader
             {
                 throw new ArgumentException("Missing required argument: --review-prompt <REVIEW_PROMPT>");
             }
-            
-            if (!parsedArgs.TryGetValue("--code-analysis-prompt", out var codeAnalysisPrompt) || string.IsNullOrWhiteSpace(codeAnalysisPrompt))
-            {
-                throw new ArgumentException("Missing required argument: --code-analysis-prompt <CODE_ANALYSIS_PROMPT>");
-            }
 
             if (!parsedArgs.TryGetValue("--editorconfig", out var editorconfig) || string.IsNullOrWhiteSpace(editorconfig))
             {
@@ -46,6 +41,13 @@ public static class AppConfigLoader
             }
 
             // Parse optional arguments with defaults
+
+            if (!parsedArgs.TryGetValue("--code-analysis-prompt", out var codeAnalysisPrompt) || string.IsNullOrWhiteSpace(codeAnalysisPrompt))
+            {
+                Console.WriteLine("--code-analysis-prompt is not set, use default prompt.");
+                codeAnalysisPrompt = Resources.AnalyzerReportPrompt;
+            }
+
             var analyzersValue = parsedArgs.GetValueOrDefault("--analyzers", "enable");
             var analyzersEnabled = analyzersValue.Equals("enable", StringComparison.OrdinalIgnoreCase);
 

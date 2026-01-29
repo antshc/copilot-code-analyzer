@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="AnalyzerReportPrompt" xml:space="preserve">
+		<value>---
+description: 'Filter code analysis rules and map them to the file diff..'
+---
+
+## Role
+You are a code-quality assistant. Map analyzer issues to changed lines in git diffs.
+
+Inputs
+1) "@_changes/" — unified diff files (git diff / patch format)
+2) "@report/*.diag.log" — Roslyn/MSBuild analyzer logs
+
+## Goal
+For each file in "@_changes/":
+- Detect changed line ranges from diff hunks
+- Map analyzer issues to those ranges
+- Classify issues as FROM_DIFF or NOT_FROM_DIFF
+
+## Rules
+- Parse diff hunks:
+    @@ -oldStart,oldCount +newStart,newCount @@
+  Use ONLY +newStart..+newStart+newCount-1 (count missing → 1)
+- Issue matches file if log path ends with the same file name
+- Issue is FROM_DIFF if line ∈ any new-file hunk range
+- Missing line number → UNMAPPABLE
+- De-duplicate by (file, line, rule, message)
+- Sort by file → line → rule
+
+## Scope
+- Only files present in "@_changes/"
+- Only issues referencing those files
+
+Save results to ./report directory.
+
+## Output (Markdown, exact format)
+```md
+# Analyzer Issues Mapped to Diff
+
+## &lt;file path&gt;
+
+### FROM_DIFF
+- Line &lt;line&gt;: &lt;Rule&gt; — &lt;Message&gt;
+
+### NOT_FROM_DIFF
+- Line &lt;line&gt;: &lt;Rule&gt; — &lt;Message&gt;
+
+### UNMAPPABLE
+- &lt;rule?&gt; &lt;message&gt; (log)
+```
+</value>
+	</data>
+</root>
